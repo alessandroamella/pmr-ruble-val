@@ -27,7 +27,7 @@ export function RatesTable() {
   const isLoading = results.some((r) => r.query.isLoading);
 
   return (
-    <div className="rounded-md border border-card-border overflow-hidden">
+    <div className="md:rounded-md border-t md:border border-card-border overflow-hidden">
       <div className="max-h-[400px] overflow-y-auto">
         <Table>
           <TableHeader className="sticky top-0 bg-background z-10">

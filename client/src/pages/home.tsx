@@ -1,5 +1,6 @@
 import type { LatestRate } from '@shared/schema';
 import { useQuery } from '@tanstack/react-query';
+import { auto as followSystemColorScheme } from 'darkreader';
 import { format } from 'date-fns';
 import { ArrowUpRight, TrendingUp } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -20,6 +21,15 @@ import flagImg from '../../assets/flag.svg';
 export default function Home() {
   const today = new Date();
   const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    followSystemColorScheme({});
+
+    // Optionally cleanup:
+    return () => {
+      followSystemColorScheme(false);
+    };
+  }, []);
 
   useEffect(() => {
     setMounted(true);
@@ -184,7 +194,7 @@ export default function Home() {
               Overview of all published currencies.
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0 md:p-6">
             <RatesTable />
           </CardContent>
         </Card>
