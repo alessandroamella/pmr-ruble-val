@@ -1,6 +1,6 @@
 'use client';
 
-import { getMonth, getYear } from 'date-fns';
+import { endOfDay, getMonth, getYear } from 'date-fns';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import { buttonVariants } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 // Import the CSS for react-datepicker. You can do this here or in a global CSS file.
 // If you do it globally (e.g., in your layout.tsx or App.tsx), you can remove this line.
 import 'react-datepicker/dist/react-datepicker.css';
+import { useMemo } from 'react';
 
 const STARTING_YEAR = 2005; // Data published since 2005
 
@@ -21,16 +22,6 @@ export type CalendarProps = {
   // Add any other props from react-datepicker you want to expose
   // e.g., minDate, maxDate, etc.
   [key: string]: any;
-};
-
-// Helper function to generate a range of years for the dropdown
-const getYearRange = () => {
-  const currentYear = getYear(new Date());
-  const years = [];
-  for (let i = STARTING_YEAR; i <= currentYear; i++) {
-    years.push(i);
-  }
-  return years;
 };
 
 const months = [
@@ -55,6 +46,16 @@ function Calendar({
   disabled,
   ...props
 }: CalendarProps) {
+  // Helper function to generate a range of years for the dropdown
+  const yearRange = useMemo(() => {
+    const currentYear = getYear(new Date());
+    const years = [];
+    for (let i = STARTING_YEAR; i <= currentYear; i++) {
+      years.push(i);
+    }
+    return years;
+  }, []);
+
   return (
     <>
       {/* 
@@ -122,6 +123,8 @@ function Calendar({
         selected={selected}
         onChange={onSelect}
         filterDate={disabled}
+        minDate={new Date(STARTING_YEAR, 0, 1)}
+        maxDate={endOfDay(new Date())}
         inline // Render the calendar directly
         // Add our custom class for styling
         calendarClassName={cn('p-3', className)}
@@ -136,7 +139,6 @@ function Calendar({
           prevMonthButtonDisabled,
           nextMonthButtonDisabled,
         }) => {
-          const years = getYearRange();
           return (
             <div className="flex items-center justify-between mb-2">
               <button
@@ -173,7 +175,7 @@ function Calendar({
                   }
                   className="bg-transparent text-sm font-medium border-none focus:ring-0 cursor-pointer"
                 >
-                  {years.map((option) => (
+                  {yearRange.map((option) => (
                     <option key={option} value={option}>
                       {option}
                     </option>
