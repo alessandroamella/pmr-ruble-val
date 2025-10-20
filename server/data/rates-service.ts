@@ -3,9 +3,7 @@ import { access } from 'node:fs/promises';
 import path from 'node:path';
 import csv from 'csv-parser';
 import NodeCache from 'node-cache';
-
-// Use import.meta.dirname for ES Modules
-const DATA_DIR = path.resolve(import.meta.dirname, '../../currency_data');
+import { DATA_DIR } from 'server/data-dir';
 
 // Initialize cache with a TTL of 5 minutes (300 seconds)
 export const cache = new NodeCache({ stdTTL: 300, checkperiod: 60 });

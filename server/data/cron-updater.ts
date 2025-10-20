@@ -8,8 +8,7 @@ import { CURRENCIES, fetchCurrencyData, sleep } from './scraper-logic';
 
 import 'dotenv/config';
 import { addDays, format, subDays } from 'date-fns';
-
-const OUTPUT_DIR = path.resolve(import.meta.dirname, '../../currency_data');
+import { DATA_DIR } from 'server/data-dir';
 
 const CRON_SCHEDULE = '0 */4 * * *'; // Runs at the start of every 4th hour
 const FROM_DAYS_AGO = 3; // Number of days back to fetch data for
@@ -84,7 +83,7 @@ export async function updateRates() {
       continue;
     }
     const fileName = `${letterCode.toLowerCase()}.csv`;
-    const filePath = path.resolve(OUTPUT_DIR, fileName);
+    const filePath = path.resolve(DATA_DIR, fileName);
 
     // 3. Read existing data from the CSV.
     const existingRecords = await readCsvFile(filePath);

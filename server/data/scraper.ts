@@ -11,6 +11,7 @@ import csv from 'csv-parser';
 import { createObjectCsvWriter } from 'csv-writer';
 import { format, startOfDay, subYears } from 'date-fns';
 import pLimit from 'p-limit'; // --- NEW: Library for concurrency control
+import { DATA_DIR } from 'server/data-dir';
 import { CURRENCIES, fetchCurrencyData, sleep } from './scraper-logic';
 
 // --- SCRIPT-SPECIFIC CONFIGURATION ---
@@ -164,9 +165,8 @@ async function main() {
     `Date range: ${formatDate(START_DATE)} to ${formatDate(END_DATE)}\n`,
   );
 
-  const OUTPUT_DIR = path.resolve(import.meta.dirname, '../../currency_data');
-  await fs.mkdir(OUTPUT_DIR, { recursive: true });
-  console.log(`Saving CSV files to: ${OUTPUT_DIR}\n`);
+  await fs.mkdir(DATA_DIR, { recursive: true });
+  console.log(`Saving CSV files to: ${DATA_DIR}\n`);
 
   // Create a limiter that will execute at most PARALLEL_FETCHES promises concurrently.
   const limit = pLimit(PARALLEL_FETCHES);
@@ -174,7 +174,7 @@ async function main() {
   // Create an array of task-running promises.
   // Each task is wrapped in the limiter.
   const tasks = Object.entries(CURRENCIES).map(([code, name]) => {
-    return limit(() => processCurrency(code, name, OUTPUT_DIR));
+    return limit(() => processCurrency(code, name, DATA_DIR));
   });
 
   // Wait for all the tasks to complete.

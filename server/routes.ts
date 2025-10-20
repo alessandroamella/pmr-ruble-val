@@ -10,9 +10,7 @@ import {
   getRatesForCurrencies,
   type RateRecordResponse,
 } from './data/rates-service.ts';
-
-// Use import.meta.dirname for ES Modules
-const DATA_DIR = path.resolve(import.meta.dirname, '../currency_data');
+import { DATA_DIR } from './data-dir.ts';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // --- REPLACED ENDPOINT for latest rate ---
