@@ -171,7 +171,7 @@ export function startCronJob() {
   console.log(`🕒 Scheduling job with pattern: "${CRON_SCHEDULE}"`);
 
   // Optional: Run on startup
-  if (process.env.NODE_ENV === 'production') {
+  if (process.env.RUN_ON_STARTUP === 'true') {
     console.log('Running initial update on startup...');
     updateRates().catch((err) => console.error('Initial update failed:', err));
   }
