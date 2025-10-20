@@ -24,8 +24,8 @@ export type CalendarProps = {
 };
 
 // Helper function to generate a range of years for the dropdown
-const getYearRange = (date: Date) => {
-  const currentYear = getYear(date);
+const getYearRange = () => {
+  const currentYear = getYear(new Date());
   const years = [];
   for (let i = STARTING_YEAR; i <= currentYear; i++) {
     years.push(i);
@@ -136,7 +136,7 @@ function Calendar({
           prevMonthButtonDisabled,
           nextMonthButtonDisabled,
         }) => {
-          const years = getYearRange(date);
+          const years = getYearRange();
           return (
             <div className="flex items-center justify-between mb-2">
               <button
