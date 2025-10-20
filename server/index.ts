@@ -2,6 +2,8 @@ import express, { type NextFunction, type Request, type Response } from "express
 import { registerRoutes } from "./routes";
 import { log, serveStatic, setupVite } from "./vite";
 
+import "dotenv/config";
+
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
