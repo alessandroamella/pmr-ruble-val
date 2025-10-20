@@ -112,7 +112,7 @@ export function HistoricalChart() {
   return (
     <div className="space-y-6">
       {/* Controls */}
-      <div className="flex flex-col sm:flex-row gap-4 flex-wrap">
+      <div className="flex flex-col sm:flex-row gap-4 flex-wrap p-6 md:p-0">
         {/* Start Date */}
         <div className="flex-1 min-w-[200px]">
           <Label className="text-sm font-medium mb-2 block">From Date</Label>
@@ -248,7 +248,10 @@ export function HistoricalChart() {
       </div>
 
       {/* Chart */}
-      <div className="w-full" data-testid="container-chart">
+      <div
+        className="-ml-10 sm:ml-0 w-[110%] sm:w-full overflow-x-hidden"
+        data-testid="container-chart"
+      >
         {isLoading ? (
           <div className="h-[400px] md:h-[500px] flex items-center justify-center">
             <div className="space-y-3 w-full px-8">

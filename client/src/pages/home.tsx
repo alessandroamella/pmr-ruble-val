@@ -55,13 +55,13 @@ export default function Home() {
       <header className="border-b bg-card/50">
         <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8 md:py-12">
           <div className="space-y-2">
-            <h1 className="text-4xl font-bold tracking-tight text-foreground flex items-center gap-3">
+            <h1 className="text-4xl font-bold tracking-tight text-foreground flex flex-col sm:flex-row items-center gap-3">
               <img
                 src={flagImg}
                 alt="Transnistria Flag"
-                className="w-16 h-auto"
+                className="w-24 sm:w-16 h-auto mt-1 sm:mt-0 mb-2 md:mb-0"
               />
-              Transnistrian Ruble Exchange Rates
+              <p>Transnistrian Ruble Exchange Rates</p>
             </h1>
             <p className="text-base text-muted-foreground">
               Data for {format(today, 'MMMM d, yyyy')} • Live PMR Ruble (
@@ -181,7 +181,7 @@ export default function Home() {
               Today's Exchange Rates
             </CardTitle>
             <CardDescription>
-              Overview of all available currency pairs
+              Overview of all published currencies.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -200,7 +200,7 @@ export default function Home() {
               Analyze exchange rate movements over time
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0 md:p-6">
             <HistoricalChart />
           </CardContent>
         </Card>
