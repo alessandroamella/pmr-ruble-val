@@ -14,7 +14,7 @@ export function PMRRubleIcon({
     <>
       <img
         src={pmrRuble}
-        alt="Pridnestrovian Ruble"
+        alt="Transnistrian Ruble"
         className={clsx(className, 'inline dark:hidden')}
         width={size}
         height={size}
@@ -22,7 +22,7 @@ export function PMRRubleIcon({
       />
       <img
         src={pmrRubleWhite}
-        alt="Pridnestrovian Ruble White"
+        alt="Transnistrian Ruble White"
         className={clsx(className, 'hidden dark:inline')}
         width={size}
         height={size}

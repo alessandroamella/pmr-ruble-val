@@ -3,9 +3,10 @@ import { useQuery } from '@tanstack/react-query';
 import { auto as followSystemColorScheme } from 'darkreader';
 import { format } from 'date-fns';
 import { AnimatePresence, motion } from 'framer-motion';
-import { AlertTriangle, ArrowUpRight, Info, TrendingUp } from 'lucide-react';
+import { ArrowUpRight, Info, TrendingUp } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { ApiStatusBanner } from '@/components/api-status-banner';
+import { CurrencyConverter } from '@/components/currency-converter';
 import { HistoricalChart } from '@/components/historical-chart';
 import { RatesTable } from '@/components/rates-table';
 import {
@@ -114,7 +115,7 @@ export default function Home() {
             </h1>
             <p className="text-base text-muted-foreground">
               Data for {format(today, 'MMMM d, yyyy')} • Live
-              Transnistrian/Pridnestrovian Ruble (
+              Pridnestrovian/Transnistrian Ruble (
               <PMRRubleIcon /> / руб/р) exchange rates and historical trends.
             </p>
             <p className="text-xs text-muted-foreground">
@@ -248,12 +249,17 @@ export default function Home() {
           </motion.div>
         </div>
 
-        {/* Today's Full Data Table */}
+        {/* Currency Converter */}
+        <motion.div variants={itemVariants}>
+          <CurrencyConverter />
+        </motion.div>
+
+        {/* Full Data Table */}
         <motion.div variants={itemVariants}>
           <Card className="border-card-border hover:bg-card/90 transition-colors">
             <CardHeader>
               <CardTitle className="text-2xl font-semibold">
-                Today's Exchange Rates
+                Exchange Rates
               </CardTitle>
               <CardDescription>
                 Overview of all published currencies.
@@ -287,15 +293,19 @@ export default function Home() {
         {/* USD Peg Information */}
         <motion.div variants={itemVariants}>
           <Card className="border-card-border hover:bg-muted/40 transition-colors bg-muted/50">
-            <CardContent className="pt-6">
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                <Info className="w-4 h-4 text-foreground mb-1 mr-1 inline " />
+            <CardHeader>
+              <CardTitle className="text-2xl font-semibold flex items-center gap-2">
+                <Info className="w-6 h-6" />
+                About the Transnistrian Ruble
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm -mt-2 text-muted-foreground leading-relaxed">
                 The Transnistrian Ruble is de facto pegged to the US Dollar. The
                 central bank evaluates daily whether adjustments to the exchange
                 rate are necessary.
               </p>
               <p className="text-sm text-muted-foreground leading-relaxed mt-2">
-                <AlertTriangle className="w-4 h-4 text-foreground mb-1 mr-1 inline " />
                 This website uses the term "Transnistrian Ruble" for clarity and
                 recognizability, but the official name is "
                 <strong>Pridnestrovian Ruble</strong>".
