@@ -9,16 +9,16 @@ import { access } from 'node:fs/promises';
 import path from 'node:path';
 import csv from 'csv-parser';
 import { createObjectCsvWriter } from 'csv-writer';
-import { format } from 'date-fns';
+import { format, startOfDay, subYears } from 'date-fns';
 import pLimit from 'p-limit'; // --- NEW: Library for concurrency control
 import { CURRENCIES, fetchCurrencyData, sleep } from './scraper-logic';
 
 // --- SCRIPT-SPECIFIC CONFIGURATION ---
 
 // You can change this range to fetch historical data.
-const START_DATE = new Date('2005-01-01');
-// const END_DATE = startOfDay(new Date()); // Up to today
-const END_DATE = new Date('2010-01-01');
+const today = startOfDay(new Date());
+const START_DATE = subYears(today, 5); // 5 years ago from today
+const END_DATE = today; // Up to today
 
 // --- NEW: Concurrency configuration ---
 // Sets how many currencies to fetch and process at the same time.
