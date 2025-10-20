@@ -10,6 +10,8 @@ import { cn } from '@/lib/utils';
 // If you do it globally (e.g., in your layout.tsx or App.tsx), you can remove this line.
 import 'react-datepicker/dist/react-datepicker.css';
 
+const STARTING_YEAR = 2005; // Data published since 2005
+
 // Define the custom props for our new Calendar component
 export type CalendarProps = {
   className?: string;
@@ -22,10 +24,10 @@ export type CalendarProps = {
 };
 
 // Helper function to generate a range of years for the dropdown
-const getYearRange = (date: Date, yearRange = 10) => {
+const getYearRange = (date: Date) => {
   const currentYear = getYear(date);
   const years = [];
-  for (let i = currentYear - yearRange; i <= currentYear + yearRange; i++) {
+  for (let i = STARTING_YEAR; i <= currentYear; i++) {
     years.push(i);
   }
   return years;
