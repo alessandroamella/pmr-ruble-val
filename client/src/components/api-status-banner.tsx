@@ -28,8 +28,8 @@ export function ApiStatusBanner({ isError, isLoading }: ApiStatusBannerProps) {
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>API Connection Issue</AlertTitle>
         <AlertDescription>
-          Unable to connect to the currency data API at localhost:5050. Please
-          ensure the API server is running and try refreshing the page.
+          Unable to connect to the currency data API. Please try refreshing the
+          page.
         </AlertDescription>
       </Alert>
     );

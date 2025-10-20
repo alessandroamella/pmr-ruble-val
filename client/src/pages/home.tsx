@@ -81,7 +81,7 @@ export default function Home() {
                 <ArrowUpRight className="w-4 h-4 text-muted-foreground" />
                 <span>EUR</span>
               </CardTitle>
-              <CardDescription>Transnistrian Ruble to Euro</CardDescription>
+              <CardDescription>Euro to Transnistrian Ruble</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
               {eurLoading ? (
@@ -121,7 +121,7 @@ export default function Home() {
                 <span>USD</span>
               </CardTitle>
               <CardDescription>
-                Transnistrian Ruble to US Dollar
+                US Dollar to Transnistrian Ruble
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
