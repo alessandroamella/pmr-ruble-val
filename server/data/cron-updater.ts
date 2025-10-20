@@ -10,7 +10,10 @@ import 'dotenv/config';
 import { addDays, format, subDays } from 'date-fns';
 import { DATA_DIR } from 'server/data-dir';
 
-const CRON_SCHEDULE = '0 */4 * * *'; // Runs at the start of every 4th hour
+// const CRON_SCHEDULE = '0 */4 * * *'; // Runs at the start of every 4th hour
+
+// once a day
+const CRON_SCHEDULE = '0 2 * * *'; // Runs daily at 2:00 AM
 const FROM_DAYS_AGO = 3; // Number of days back to fetch data for
 
 interface SimpleRateRecord {
