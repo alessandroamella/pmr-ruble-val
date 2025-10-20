@@ -1,25 +1,33 @@
-import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { format, subYears } from "date-fns";
 import {
-  LineChart,
+  AVAILABLE_CURRENCIES,
+  type CurrencyCode,
+  type RatesResponse,
+} from '@shared/schema';
+import { useQuery } from '@tanstack/react-query';
+import { format, subYears } from 'date-fns';
+import { CalendarIcon } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import {
+  CartesianGrid,
+  Legend,
   Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
-import { Calendar } from "@/components/ui/calendar";
-import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { CalendarIcon } from "lucide-react";
-import { AVAILABLE_CURRENCIES, type RatesResponse, type CurrencyCode } from "@shared/schema";
-import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
+} from 'recharts';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 export function HistoricalChart() {
   const today = new Date();
@@ -27,28 +35,34 @@ export function HistoricalChart() {
 
   const [startDate, setStartDate] = useState<Date>(oneYearAgo);
   const [endDate, setEndDate] = useState<Date>(today);
-  const [selectedCurrencies, setSelectedCurrencies] = useState<CurrencyCode[]>(['usd', 'eur']);
+  const [selectedCurrencies, setSelectedCurrencies] = useState<CurrencyCode[]>([
+    'usd',
+    'eur',
+  ]);
 
   const formatDate = (date: Date) => format(date, 'yyyy-MM-dd');
 
   // Fetch historical data
   const { data, isLoading, error } = useQuery<RatesResponse>({
-    queryKey: ['/api/rates', { 
-      startDate: formatDate(startDate), 
-      endDate: formatDate(endDate), 
-      currencies: selectedCurrencies.join(',') 
-    }],
+    queryKey: [
+      '/api/rates',
+      {
+        startDate: formatDate(startDate),
+        endDate: formatDate(endDate),
+        currencies: selectedCurrencies.join(','),
+      },
+    ],
     queryFn: async ({ queryKey }) => {
       const [path, params] = queryKey as [string, Record<string, string>];
       const queryParams = new URLSearchParams(params);
       const response = await fetch(`${path}?${queryParams.toString()}`, {
-        credentials: "include",
+        credentials: 'include',
       });
-      
+
       if (!response.ok) {
         throw new Error(`${response.status}: ${response.statusText}`);
       }
-      
+
       return response.json();
     },
     enabled: selectedCurrencies.length > 0,
@@ -70,11 +84,11 @@ export function HistoricalChart() {
     // Create chart data points
     return sortedDates.map((date) => {
       const point: any = { date };
-      
+
       selectedCurrencies.forEach((code) => {
         const rateData = data[code]?.find((r) => r.date === date);
         if (rateData) {
-          point[code] = parseFloat(rateData.rate);
+          point[code] = Number.parseFloat(rateData.rate);
         }
       });
 
@@ -105,22 +119,23 @@ export function HistoricalChart() {
               <Button
                 variant="outline"
                 className={cn(
-                  "w-full justify-start text-left font-normal",
-                  !startDate && "text-muted-foreground"
+                  'w-full justify-start text-left font-normal',
+                  !startDate && 'text-muted-foreground',
                 )}
                 data-testid="button-start-date"
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {startDate ? format(startDate, "PPP") : "Pick a date"}
+                {startDate ? format(startDate, 'PPP') : 'Pick a date'}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
               <Calendar
-                mode="single"
                 selected={startDate}
                 onSelect={(date) => date && setStartDate(date)}
-                initialFocus
-                disabled={(date) => date > endDate}
+                // The disabled logic now uses the `disabled` prop, which is mapped to `filterDate`
+                disabled={(date) => endDate && date > endDate}
+                // You can also use minDate/maxDate for better performance and accessibility
+                // maxDate={endDate || undefined}
               />
             </PopoverContent>
           </Popover>
@@ -134,22 +149,26 @@ export function HistoricalChart() {
               <Button
                 variant="outline"
                 className={cn(
-                  "w-full justify-start text-left font-normal",
-                  !endDate && "text-muted-foreground"
+                  'w-full justify-start text-left font-normal',
+                  !endDate && 'text-muted-foreground',
                 )}
                 data-testid="button-end-date"
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {endDate ? format(endDate, "PPP") : "Pick a date"}
+                {endDate ? format(endDate, 'PPP') : 'Pick a date'}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
               <Calendar
-                mode="single"
                 selected={endDate}
                 onSelect={(date) => date && setEndDate(date)}
-                initialFocus
-                disabled={(date) => date < startDate || date > today}
+                // The disabled logic
+                disabled={(date) =>
+                  (startDate && date < startDate) || date > new Date()
+                }
+                // You can also use minDate/maxDate for better performance
+                // minDate={startDate || undefined}
+                // maxDate={new Date()}
               />
             </PopoverContent>
           </Popover>
@@ -171,8 +190,8 @@ export function HistoricalChart() {
                   htmlFor={`currency-${currency.code}`}
                   className="text-sm font-normal cursor-pointer flex items-center gap-1.5"
                 >
-                  <div 
-                    className="w-3 h-3 rounded-full" 
+                  <div
+                    className="w-3 h-3 rounded-full"
                     style={{ backgroundColor: currency.color }}
                   />
                   {currency.code.toUpperCase()}
@@ -213,7 +232,11 @@ export function HistoricalChart() {
               data={chartData}
               margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
             >
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="hsl(var(--border))"
+                opacity={0.3}
+              />
               <XAxis
                 dataKey="date"
                 stroke="hsl(var(--muted-foreground))"
@@ -232,14 +255,21 @@ export function HistoricalChart() {
                   borderRadius: '6px',
                   color: 'hsl(var(--popover-foreground))',
                 }}
-                labelFormatter={(value) => format(new Date(value), 'MMMM d, yyyy')}
-                formatter={(value: any) => [parseFloat(value).toFixed(4), '']}
+                labelFormatter={(value) =>
+                  format(new Date(value), 'MMMM d, yyyy')
+                }
+                formatter={(value: any) => [
+                  Number.parseFloat(value).toFixed(4),
+                  '',
+                ]}
               />
               <Legend />
               {selectedCurrencies.map((code) => {
-                const currency = AVAILABLE_CURRENCIES.find((c) => c.code === code);
+                const currency = AVAILABLE_CURRENCIES.find(
+                  (c) => c.code === code,
+                );
                 if (!currency) return null;
-                
+
                 return (
                   <Line
                     key={code}

@@ -1,13 +1,19 @@
-import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowUpRight, ArrowDownRight, TrendingUp } from "lucide-react";
-import { format } from "date-fns";
-import { AVAILABLE_CURRENCIES, type LatestRate } from "@shared/schema";
-import { RatesTable } from "@/components/rates-table";
-import { HistoricalChart } from "@/components/historical-chart";
-import { ApiStatusBanner } from "@/components/api-status-banner";
-import { useEffect, useState } from "react";
+import type { LatestRate } from '@shared/schema';
+import { useQuery } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import { ArrowUpRight, TrendingUp } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ApiStatusBanner } from '@/components/api-status-banner';
+import { HistoricalChart } from '@/components/historical-chart';
+import { RatesTable } from '@/components/rates-table';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Home() {
   const today = new Date();
@@ -18,13 +24,21 @@ export default function Home() {
   }, []);
 
   // Fetch latest EUR rate
-  const { data: eurRate, isLoading: eurLoading, isError: eurError } = useQuery<LatestRate>({
+  const {
+    data: eurRate,
+    isLoading: eurLoading,
+    isError: eurError,
+  } = useQuery<LatestRate>({
     queryKey: ['/api/rates/eur/latest'],
     retry: 2,
   });
 
   // Fetch latest USD rate
-  const { data: usdRate, isLoading: usdLoading, isError: usdError } = useQuery<LatestRate>({
+  const {
+    data: usdRate,
+    isLoading: usdLoading,
+    isError: usdError,
+  } = useQuery<LatestRate>({
     queryKey: ['/api/rates/usd/latest'],
     retry: 2,
   });
@@ -43,7 +57,8 @@ export default function Home() {
               Transnistrian Ruble Exchange Rates
             </h1>
             <p className="text-base text-muted-foreground">
-              Data for {format(today, 'MMMM d, yyyy')} • Live PMR exchange rates and historical trends
+              Data for {format(today, 'MMMM d, yyyy')} • Live PMR exchange rates
+              and historical trends
             </p>
           </div>
         </div>
@@ -51,9 +66,9 @@ export default function Home() {
 
       <main className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8 space-y-8">
         {/* API Status Banner */}
-        <ApiStatusBanner 
-          isError={eurError || usdError} 
-          isLoading={eurLoading && usdLoading && !eurError && !usdError} 
+        <ApiStatusBanner
+          isError={eurError || usdError}
+          isLoading={eurLoading && usdLoading && !eurError && !usdError}
         />
 
         {/* Exchange Rate Cards */}
@@ -76,15 +91,23 @@ export default function Home() {
                 </>
               ) : eurRate ? (
                 <>
-                  <div className="text-5xl font-mono font-bold" data-testid="text-rate-eur">
-                    {parseFloat(eurRate.rate).toFixed(4)}
+                  <div
+                    className="text-5xl font-mono font-bold"
+                    data-testid="text-rate-eur"
+                  >
+                    {Number.parseFloat(eurRate.rate).toFixed(4)}
                   </div>
-                  <p className="text-xs text-muted-foreground" data-testid="text-date-eur">
+                  <p
+                    className="text-xs text-muted-foreground"
+                    data-testid="text-date-eur"
+                  >
                     Updated: {format(new Date(eurRate.date), 'MMM d, yyyy')}
                   </p>
                 </>
               ) : (
-                <p className="text-sm text-muted-foreground">No data available</p>
+                <p className="text-sm text-muted-foreground">
+                  No data available
+                </p>
               )}
             </CardContent>
           </Card>
@@ -97,7 +120,9 @@ export default function Home() {
                 <ArrowUpRight className="w-4 h-4 text-muted-foreground" />
                 <span>USD</span>
               </CardTitle>
-              <CardDescription>Transnistrian Ruble to US Dollar</CardDescription>
+              <CardDescription>
+                Transnistrian Ruble to US Dollar
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
               {usdLoading ? (
@@ -107,15 +132,23 @@ export default function Home() {
                 </>
               ) : usdRate ? (
                 <>
-                  <div className="text-5xl font-mono font-bold" data-testid="text-rate-usd">
-                    {parseFloat(usdRate.rate).toFixed(4)}
+                  <div
+                    className="text-5xl font-mono font-bold"
+                    data-testid="text-rate-usd"
+                  >
+                    {Number.parseFloat(usdRate.rate).toFixed(4)}
                   </div>
-                  <p className="text-xs text-muted-foreground" data-testid="text-date-usd">
+                  <p
+                    className="text-xs text-muted-foreground"
+                    data-testid="text-date-usd"
+                  >
                     Updated: {format(new Date(usdRate.date), 'MMM d, yyyy')}
                   </p>
                 </>
               ) : (
-                <p className="text-sm text-muted-foreground">No data available</p>
+                <p className="text-sm text-muted-foreground">
+                  No data available
+                </p>
               )}
             </CardContent>
           </Card>
@@ -124,7 +157,9 @@ export default function Home() {
         {/* Today's Full Data Table */}
         <Card className="border-card-border">
           <CardHeader>
-            <CardTitle className="text-2xl font-semibold">Today's Exchange Rates</CardTitle>
+            <CardTitle className="text-2xl font-semibold">
+              Today's Exchange Rates
+            </CardTitle>
             <CardDescription>
               Complete overview of all available currency pairs
             </CardDescription>
@@ -142,7 +177,7 @@ export default function Home() {
               Historical Trends
             </CardTitle>
             <CardDescription>
-              Analyze exchange rate movements over time with customizable date ranges and currencies
+              Analyze exchange rate movements over time
             </CardDescription>
           </CardHeader>
           <CardContent>

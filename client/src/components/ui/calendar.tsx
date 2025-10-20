@@ -1,68 +1,203 @@
-import * as React from "react"
-import { ChevronLeft, ChevronRight } from "lucide-react"
-import { DayPicker } from "react-day-picker"
+'use client';
 
-import { cn } from "@/lib/utils"
-import { buttonVariants } from "@/components/ui/button"
+import { getMonth, getYear } from 'date-fns';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import DatePicker from 'react-datepicker';
+import { buttonVariants } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
-export type CalendarProps = React.ComponentProps<typeof DayPicker>
+// Import the CSS for react-datepicker. You can do this here or in a global CSS file.
+// If you do it globally (e.g., in your layout.tsx or App.tsx), you can remove this line.
+import 'react-datepicker/dist/react-datepicker.css';
+
+// Define the custom props for our new Calendar component
+export type CalendarProps = {
+  className?: string;
+  selected?: Date | null;
+  onSelect: (date: Date | null) => void;
+  disabled?: (date: Date) => boolean;
+  // Add any other props from react-datepicker you want to expose
+  // e.g., minDate, maxDate, etc.
+  [key: string]: any;
+};
+
+// Helper function to generate a range of years for the dropdown
+const getYearRange = (date: Date, yearRange = 10) => {
+  const currentYear = getYear(date);
+  const years = [];
+  for (let i = currentYear - yearRange; i <= currentYear + yearRange; i++) {
+    years.push(i);
+  }
+  return years;
+};
+
+const months = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
 
 function Calendar({
   className,
-  classNames,
-  showOutsideDays = true,
+  selected,
+  onSelect,
+  disabled,
   ...props
 }: CalendarProps) {
   return (
-    <DayPicker
-      showOutsideDays={showOutsideDays}
-      className={cn("p-3", className)}
-      classNames={{
-        months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
-        month: "space-y-4",
-        caption: "flex justify-center pt-1 relative items-center",
-        caption_label: "text-sm font-medium",
-        nav: "space-x-1 flex items-center",
-        nav_button: cn(
-          buttonVariants({ variant: "outline" }),
-          "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
-        ),
-        nav_button_previous: "absolute left-1",
-        nav_button_next: "absolute right-1",
-        table: "w-full border-collapse space-y-1",
-        head_row: "flex",
-        head_cell:
-          "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
-        row: "flex w-full mt-2",
-        cell: "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
-        day: cn(
-          buttonVariants({ variant: "ghost" }),
-          "h-9 w-9 p-0 font-normal aria-selected:opacity-100"
-        ),
-        day_range_end: "day-range-end",
-        day_selected:
-          "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-        day_today: "bg-accent text-accent-foreground",
-        day_outside:
-          "day-outside text-muted-foreground aria-selected:bg-accent/50 aria-selected:text-muted-foreground",
-        day_disabled: "text-muted-foreground opacity-50",
-        day_range_middle:
-          "aria-selected:bg-accent aria-selected:text-accent-foreground",
-        day_hidden: "invisible",
-        ...classNames,
-      }}
-      components={{
-        IconLeft: ({ className, ...props }) => (
-          <ChevronLeft className={cn("h-4 w-4", className)} {...props} />
-        ),
-        IconRight: ({ className, ...props }) => (
-          <ChevronRight className={cn("h-4 w-4", className)} {...props} />
-        ),
-      }}
-      {...props}
-    />
-  )
-}
-Calendar.displayName = "Calendar"
+    <>
+      {/* 
+        This is a bit of a hack to style react-datepicker with Tailwind.
+        We apply global styles scoped to the custom class 'shadcn-datepicker'.
+      */}
+      <style>{`
+        .shadcn-datepicker .react-datepicker {
+          border: none;
+          background-color: transparent;
+        }
+        .shadcn-datepicker .react-datepicker__header {
+          background-color: transparent;
+          border-bottom: none;
+          padding: 0;
+          margin-bottom: 0.5rem; /* Equivalent to mb-2 */
+        }
+        .shadcn-datepicker .react-datepicker__day-names {
+          margin-bottom: 0.5rem; /* Equivalent to mb-2 */
+        }
+        .shadcn-datepicker .react-datepicker__day-name {
+          color: hsl(var(--muted-foreground));
+          font-size: 0.8rem;
+          line-height: 1rem;
+          width: 2.25rem; /* Equivalent to w-9 */
+        }
+        .shadcn-datepicker .react-datepicker__day {
+          width: 2.25rem; /* Equivalent to w-9 */
+          height: 2.25rem; /* Equivalent to h-9 */
+          line-height: 2.25rem;
+          border-radius: 0.5rem; /* Equivalent to rounded-md */
+          font-weight: 400; /* Equivalent to font-normal */
+          color: hsl(var(--foreground));
+        }
+        .shadcn-datepicker .react-datepicker__day:hover {
+          background-color: hsl(var(--accent));
+          color: hsl(var(--accent-foreground));
+        }
+        .shadcn-datepicker .react-datepicker__day--selected {
+          background-color: hsl(var(--primary));
+          color: hsl(var(--primary-foreground));
+        }
+        .shadcn-datepicker .react-datepicker__day--selected:hover {
+          background-color: hsl(var(--primary));
+          color: hsl(var(--primary-foreground));
+        }
+        .shadcn-datepicker .react-datepicker__day--outside-month {
+          color: hsl(var(--muted-foreground));
+          opacity: 0.5;
+        }
+        .shadcn-datepicker .react-datepicker__day--disabled {
+          color: hsl(var(--muted-foreground));
+          opacity: 0.5;
+        }
+        .shadcn-datepicker .react-datepicker__day--disabled:hover {
+          background-color: transparent;
+        }
+        .shadcn-datepicker .react-datepicker__day--keyboard-selected {
+          background-color: hsl(var(--accent));
+          color: hsl(var(--accent-foreground));
+        }
+      `}</style>
+      <DatePicker
+        // Main props
+        selected={selected}
+        onChange={onSelect}
+        filterDate={disabled}
+        inline // This is crucial to render the calendar directly
+        // Add our custom class for styling
+        calendarClassName={cn('p-3', className)}
+        wrapperClassName="shadcn-datepicker"
+        // Custom Header for Year/Month dropdowns and navigation
+        renderCustomHeader={({
+          date,
+          changeYear,
+          changeMonth,
+          decreaseMonth,
+          increaseMonth,
+          prevMonthButtonDisabled,
+          nextMonthButtonDisabled,
+        }) => {
+          const years = getYearRange(date);
+          return (
+            <div className="flex items-center justify-between mb-2">
+              <button
+                onClick={decreaseMonth}
+                disabled={prevMonthButtonDisabled}
+                className={cn(
+                  buttonVariants({ variant: 'outline', size: 'icon' }),
+                  'h-7 w-7',
+                )}
+                type="button"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
 
-export { Calendar }
+              <div className="flex items-center gap-2">
+                <select
+                  value={months[getMonth(date)]}
+                  onChange={({ target: { value } }) =>
+                    changeMonth(months.indexOf(value))
+                  }
+                  className="bg-transparent text-sm font-medium border-none focus:ring-0 cursor-pointer"
+                >
+                  {months.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  value={getYear(date)}
+                  onChange={({ target: { value } }) =>
+                    changeYear(Number(value))
+                  }
+                  className="bg-transparent text-sm font-medium border-none focus:ring-0 cursor-pointer"
+                >
+                  {years.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <button
+                onClick={increaseMonth}
+                disabled={nextMonthButtonDisabled}
+                className={cn(
+                  buttonVariants({ variant: 'outline', size: 'icon' }),
+                  'h-7 w-7',
+                )}
+                type="button"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          );
+        }}
+        {...props}
+      />
+    </>
+  );
+}
+Calendar.displayName = 'Calendar';
+
+export { Calendar };

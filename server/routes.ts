@@ -1,7 +1,7 @@
+import { createServer, type Server } from "node:http";
 import type { Express } from "express";
-import { createServer, type Server } from "http";
 
-const API_BASE_URL = "http://localhost:5050";
+const API_BASE_URL = process.env.VITE_API_BASE_URL || "http://localhost:8490";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Proxy endpoint for getting latest rate for a specific currency
@@ -9,12 +9,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { currency } = req.params;
       const url = `${API_BASE_URL}/api/rates/${currency}/latest`;
-      
+
       const response = await fetch(url);
-      
+
       if (!response.ok) {
         return res.status(response.status).json({
-          error: `Failed to fetch data for ${currency}`,
+          error: `Failed to fetch data for ${currency}`
         });
       }
 
@@ -23,7 +23,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching latest rate:", error);
       return res.status(500).json({
-        error: "Internal server error while fetching currency data",
+        error: "Internal server error while fetching currency data"
       });
     }
   });
@@ -36,7 +36,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validate required parameters
       if (!startDate || !endDate || !currencies) {
         return res.status(400).json({
-          error: "Missing required parameters: startDate, endDate, and currencies",
+          error: "Missing required parameters: startDate, endDate, and currencies"
         });
       }
 
@@ -44,16 +44,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const queryParams = new URLSearchParams({
         startDate: startDate as string,
         endDate: endDate as string,
-        currencies: currencies as string,
+        currencies: currencies as string
       });
 
       const url = `${API_BASE_URL}/api/rates?${queryParams}`;
-      
+
       const response = await fetch(url);
-      
+
       if (!response.ok) {
         return res.status(response.status).json({
-          error: "Failed to fetch historical rate data",
+          error: "Failed to fetch historical rate data"
         });
       }
 
@@ -62,7 +62,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching historical rates:", error);
       return res.status(500).json({
-        error: "Internal server error while fetching historical data",
+        error: "Internal server error while fetching historical data"
       });
     }
   });

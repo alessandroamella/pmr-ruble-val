@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 // Currency rate data schemas
 export const currencyRateSchema = z.object({
@@ -22,9 +22,24 @@ export type RatesResponse = z.infer<typeof ratesResponseSchema>;
 export const AVAILABLE_CURRENCIES = [
   { code: 'usd', name: 'US Dollar', symbol: '$', color: 'hsl(var(--chart-2))' },
   { code: 'eur', name: 'Euro', symbol: '€', color: 'hsl(var(--chart-1))' },
-  { code: 'rub', name: 'Russian Ruble', symbol: '₽', color: 'hsl(var(--chart-3))' },
-  { code: 'uah', name: 'Ukrainian Hryvnia', symbol: '₴', color: 'hsl(var(--chart-4))' },
-  { code: 'mdl', name: 'Moldovan Leu', symbol: 'L', color: 'hsl(var(--chart-5))' },
+  {
+    code: 'rub',
+    name: 'Russian Ruble',
+    symbol: '₽',
+    color: 'hsl(var(--chart-3))',
+  },
+  {
+    code: 'uah',
+    name: 'Ukrainian Hryvnia',
+    symbol: '₴',
+    color: 'hsl(var(--chart-4))',
+  },
+  {
+    code: 'mdl',
+    name: 'Moldovan Leu',
+    symbol: 'L',
+    color: 'hsl(var(--chart-5))',
+  },
 ] as const;
 
-export type CurrencyCode = typeof AVAILABLE_CURRENCIES[number]['code'];
+export type CurrencyCode = (typeof AVAILABLE_CURRENCIES)[number]['code'];
