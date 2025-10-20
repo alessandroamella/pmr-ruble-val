@@ -2,7 +2,7 @@ import type { LatestRate } from '@shared/schema';
 import { useQuery } from '@tanstack/react-query';
 import { auto as followSystemColorScheme } from 'darkreader';
 import { format } from 'date-fns';
-import { ArrowUpRight, TrendingUp } from 'lucide-react';
+import { AlertTriangle, ArrowUpRight, Info, TrendingUp } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { ApiStatusBanner } from '@/components/api-status-banner';
 import { HistoricalChart } from '@/components/historical-chart';
@@ -74,9 +74,9 @@ export default function Home() {
               <p>Transnistrian Ruble Exchange Rates</p>
             </h1>
             <p className="text-base text-muted-foreground">
-              Data for {format(today, 'MMMM d, yyyy')} • Live PMR Ruble (
-              <PMRRubleIcon className="inline" /> / руб/р) exchange rates and
-              historical trends.
+              Data for {format(today, 'MMMM d, yyyy')} • Live
+              Transnistrian/Pridnestrovian Ruble (
+              <PMRRubleIcon /> / руб/р) exchange rates and historical trends.
             </p>
             <p className="text-xs text-muted-foreground">
               Data from{' '}
@@ -94,7 +94,7 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8 space-y-8">
+      <main className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 pt-8 space-y-8">
         {/* API Status Banner */}
         <ApiStatusBanner
           isError={eurError || usdError}
@@ -219,10 +219,16 @@ export default function Home() {
         <Card className="border-card-border bg-muted/50">
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground leading-relaxed">
-              <strong className="font-medium text-foreground">Note:</strong> The
-              Transnistrian Ruble is de facto pegged to the US Dollar. The
+              <Info className="w-4 h-4 text-foreground mb-1 mr-1 inline " />
+              The Transnistrian Ruble is de facto pegged to the US Dollar. The
               central bank evaluates daily whether adjustments to the exchange
               rate are necessary.
+            </p>
+            <p className="text-sm text-muted-foreground leading-relaxed mt-2">
+              <AlertTriangle className="w-4 h-4 text-foreground mb-1 mr-1 inline " />
+              This website uses the term "Transnistrian Ruble" for clarity and
+              recognizability, but the official name is "
+              <strong>Pridnestrovian Ruble</strong>".
             </p>
           </CardContent>
         </Card>
@@ -232,7 +238,7 @@ export default function Home() {
       <footer className="border-t mt-16">
         <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6">
           <p className="text-sm text-muted-foreground text-center">
-            Transnistrian Ruble Exchange Rate Dashboard • Data updated daily
+            Transnistrian Ruble Exchange Rates • Data updated daily
           </p>
           <p className="text-xs text-muted-foreground text-center mt-1">
             A small project by{' '}

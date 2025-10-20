@@ -40,6 +40,7 @@ export function HistoricalChart() {
   const [selectedCurrencies, setSelectedCurrencies] = useState<CurrencyCode[]>([
     'eur',
     'gbp',
+    'usd',
   ]);
 
   const formatDate = (date: Date) => format(date, 'yyyy-MM-dd');

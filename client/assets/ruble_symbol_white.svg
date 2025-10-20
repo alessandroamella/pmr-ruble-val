@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="140"
+   height="150"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.48.0 r9654"
+   sodipodi:docname="Pridnestrovie ruble sign.svg"
+   style="display:inline">
+  <defs
+     id="defs4">
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect3023"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect3019"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect3010"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect3006"
+       is_visible="true" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1.979899"
+     inkscape:cx="-32.912783"
+     inkscape:cy="119.55006"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer2"
+     showgrid="false"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0"
+     showguides="true"
+     inkscape:guide-bbox="true"
+     inkscape:object-nodes="true"
+     inkscape:snap-page="true"
+     inkscape:window-width="1920"
+     inkscape:window-height="1058"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="Default"
+     style="display:inline">
+    <path
+       style="fill:#ffffff"
+       d="M 50.5,29 21.934351,137.78125 36.394895,137.78125 65.03125,29 z M 73.762597,29 45.196948,137.78125 59.750243,137.78125 88.315892,29 z"
+       id="path3001"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cccccccccc" />
+    <path
+       transform="translate(-224.28572,-717.36218)"
+       style="fill:#ffffff;display:inline"
+       d="M 234.03392,749.16272 238.24806,736.9196 C 246.22172,735.448 254.2546,734.29727 262.32073,733.47113 273.87102,732.28813 285.47926,731.77132 297.0844,731.41148 306.83982,731.109 316.77576,730.93869 326.15441,733.64066 331.6108,735.21263 336.81559,737.76444 341.2039,741.36805 345.59221,744.97166 349.14459,749.6471 351.14885,754.95993 352.97357,759.79684 353.49044,765.09937 352.79505,770.22204 352.09966,775.34471 350.20681,780.28351 347.43755,784.64888 344.19279,789.76381 339.78652,794.06657 334.95895,797.72521 327.69207,803.23252 319.43197,807.3496 310.83442,810.38607 296.44793,815.46707 281.0129,817.55789 265.79312,816.48733 L 269.06751,806.63762 C 286.35746,807.20659 303.78176,802.89943 318.81532,794.34032 324.18577,791.28275 329.38302,787.56478 332.7412,782.377 335.33203,778.37464 336.71007,773.60332 336.68331,768.83566 336.64401,761.83334 333.50229,754.9138 328.28857,750.23927 323.54553,745.98675 317.32598,743.65123 311.03439,742.65312 304.7428,741.655 298.32518,741.90883 291.96617,742.28745 272.54315,743.44391 253.1881,745.74092 234.03392,749.16272"
+       id="path2996"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="ccsscssssccsssssc"
+       inkscape:path-effect="#path-effect3023"
+       inkscape:original-d="M 234.03392,749.16272 238.24806,736.9196 C 246.5886,735.25392 254.61445,733.84057 262.32073,733.47113 273.42432,732.93882 285.40329,731.73002 297.0844,731.41148 307.25881,731.13402 317.20724,731.53197 326.15441,733.64066 339.65429,736.98725 348.34159,744.48311 351.14885,754.95993 352.9757,761.77782 354.73218,772.99253 347.43755,784.64888 344.70522,789.01498 340.70301,793.44304 334.95895,797.72521 328.9812,802.18159 321.11701,806.47997 310.83442,810.38607 299.35651,814.74625 284.70968,815.11067 265.79312,816.48733 L 269.06751,806.63762 C 289.10018,807.58755 305.74225,800.93628 318.81532,794.34032 325.56546,790.93457 329.98583,786.74077 332.7412,782.377 335.62272,777.81347 336.68331,773.06405 336.68331,768.83566 336.68331,761.06075 334.28922,754.75259 328.28857,750.23927 321.4551,745.09956 309.94451,742.28745 291.96617,742.28745 277.55093,742.28745 257.47894,744.71047 234.03392,749.16272 z" />
+  </g>
+</svg>
