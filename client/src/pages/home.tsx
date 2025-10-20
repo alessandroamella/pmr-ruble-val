@@ -207,7 +207,8 @@ export default function Home() {
               Historical Trends
             </CardTitle>
             <CardDescription>
-              Analyze exchange rate movements over time
+              Exchange rate trends for selected currencies against the
+              Transnistrian Ruble.
             </CardDescription>
           </CardHeader>
           <CardContent className="p-0 md:p-6">
