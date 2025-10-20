@@ -120,7 +120,7 @@ function Calendar({
         selected={selected}
         onChange={onSelect}
         filterDate={disabled}
-        inline // This is crucial to render the calendar directly
+        inline // Render the calendar directly
         // Add our custom class for styling
         calendarClassName={cn('p-3', className)}
         wrapperClassName="shadcn-datepicker"

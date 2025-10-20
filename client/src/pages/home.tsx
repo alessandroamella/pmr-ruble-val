@@ -13,7 +13,9 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { PMRRubleIcon } from '@/components/ui/pmr-ruble-icon';
 import { Skeleton } from '@/components/ui/skeleton';
+import flagImg from '../../assets/flag.svg';
 
 export default function Home() {
   const today = new Date();
@@ -53,12 +55,30 @@ export default function Home() {
       <header className="border-b bg-card/50">
         <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8 md:py-12">
           <div className="space-y-2">
-            <h1 className="text-4xl font-bold tracking-tight text-foreground">
+            <h1 className="text-4xl font-bold tracking-tight text-foreground flex items-center gap-3">
+              <img
+                src={flagImg}
+                alt="Transnistria Flag"
+                className="w-16 h-auto"
+              />
               Transnistrian Ruble Exchange Rates
             </h1>
             <p className="text-base text-muted-foreground">
-              Data for {format(today, 'MMMM d, yyyy')} • Live PMR exchange rates
-              and historical trends
+              Data for {format(today, 'MMMM d, yyyy')} • Live PMR Ruble (
+              <PMRRubleIcon className="inline" /> / руб/р) exchange rates and
+              historical trends.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Data from{' '}
+              <a
+                href="https://www.cbpmr.net/?lang=en"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-foreground transition-colors"
+              >
+                Pridnestrovian Republican Bank
+              </a>
+              .
             </p>
           </div>
         </div>
@@ -77,9 +97,9 @@ export default function Home() {
           <Card className="border-card-border" data-testid="card-rate-eur">
             <CardHeader className="pb-3">
               <CardTitle className="text-lg font-medium flex items-center gap-2">
-                <span className="text-muted-foreground">PMR</span>
-                <ArrowUpRight className="w-4 h-4 text-muted-foreground" />
                 <span>EUR</span>
+                <ArrowUpRight className="w-4 h-4 text-muted-foreground" />
+                <span className="text-muted-foreground">PMR</span>
               </CardTitle>
               <CardDescription>Euro to Transnistrian Ruble</CardDescription>
             </CardHeader>
@@ -116,9 +136,9 @@ export default function Home() {
           <Card className="border-card-border" data-testid="card-rate-usd">
             <CardHeader className="pb-3">
               <CardTitle className="text-lg font-medium flex items-center gap-2">
-                <span className="text-muted-foreground">PMR</span>
-                <ArrowUpRight className="w-4 h-4 text-muted-foreground" />
                 <span>USD</span>
+                <ArrowUpRight className="w-4 h-4 text-muted-foreground" />
+                <span className="text-muted-foreground">PMR</span>
               </CardTitle>
               <CardDescription>
                 US Dollar to Transnistrian Ruble
@@ -161,7 +181,7 @@ export default function Home() {
               Today's Exchange Rates
             </CardTitle>
             <CardDescription>
-              Complete overview of all available currency pairs
+              Overview of all available currency pairs
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -184,6 +204,18 @@ export default function Home() {
             <HistoricalChart />
           </CardContent>
         </Card>
+
+        {/* USD Peg Information */}
+        <Card className="border-card-border bg-muted/50">
+          <CardContent className="pt-6">
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              <strong className="font-medium text-foreground">Note:</strong> The
+              Transnistrian Ruble is de facto pegged to the US Dollar. The
+              central bank evaluates daily whether adjustments to the exchange
+              rate are necessary.
+            </p>
+          </CardContent>
+        </Card>
       </main>
 
       {/* Footer */}
@@ -191,6 +223,27 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6">
           <p className="text-sm text-muted-foreground text-center">
             Transnistrian Ruble Exchange Rate Dashboard • Data updated daily
+          </p>
+          <p className="text-xs text-muted-foreground text-center mt-1">
+            A small project by{' '}
+            <a
+              href="https://www.bitrey.dev"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-foreground transition-colors"
+            >
+              bitrey.dev
+            </a>
+            . Data sourced from the{' '}
+            <a
+              href="https://www.cbpmr.net/?lang=en"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-foreground transition-colors"
+            >
+              Pridnestrovian Republican Bank
+            </a>
+            .
           </p>
         </div>
       </footer>

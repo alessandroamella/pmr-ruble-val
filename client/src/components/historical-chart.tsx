@@ -4,7 +4,7 @@ import {
   type RatesResponse,
 } from '@shared/schema';
 import { useQuery } from '@tanstack/react-query';
-import { format, subYears } from 'date-fns';
+import { format, isAfter, isBefore, subYears } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import {
@@ -17,6 +17,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -26,6 +27,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
@@ -36,8 +38,8 @@ export function HistoricalChart() {
   const [startDate, setStartDate] = useState<Date>(oneYearAgo);
   const [endDate, setEndDate] = useState<Date>(today);
   const [selectedCurrencies, setSelectedCurrencies] = useState<CurrencyCode[]>([
-    'usd',
     'eur',
+    'gbp',
   ]);
 
   const formatDate = (date: Date) => format(date, 'yyyy-MM-dd');
@@ -132,10 +134,7 @@ export function HistoricalChart() {
               <Calendar
                 selected={startDate}
                 onSelect={(date) => date && setStartDate(date)}
-                // The disabled logic now uses the `disabled` prop, which is mapped to `filterDate`
-                disabled={(date) => endDate && date > endDate}
-                // You can also use minDate/maxDate for better performance and accessibility
-                // maxDate={endDate || undefined}
+                disabled={(date) => isBefore(date, endDate)}
               />
             </PopoverContent>
           </Popover>
@@ -162,13 +161,7 @@ export function HistoricalChart() {
               <Calendar
                 selected={endDate}
                 onSelect={(date) => date && setEndDate(date)}
-                // The disabled logic
-                disabled={(date) =>
-                  (startDate && date < startDate) || date > new Date()
-                }
-                // You can also use minDate/maxDate for better performance
-                // minDate={startDate || undefined}
-                // maxDate={new Date()}
+                disabled={(date) => isAfter(date, startDate)}
               />
             </PopoverContent>
           </Popover>
@@ -177,28 +170,80 @@ export function HistoricalChart() {
         {/* Currency Selection */}
         <div className="flex-1 min-w-[200px]">
           <Label className="text-sm font-medium mb-2 block">Currencies</Label>
-          <div className="flex flex-wrap gap-3">
-            {AVAILABLE_CURRENCIES.map((currency) => (
-              <div key={currency.code} className="flex items-center space-x-2">
-                <Checkbox
-                  id={`currency-${currency.code}`}
-                  checked={selectedCurrencies.includes(currency.code)}
-                  onCheckedChange={() => toggleCurrency(currency.code)}
-                  data-testid={`checkbox-currency-${currency.code}`}
-                />
-                <Label
-                  htmlFor={`currency-${currency.code}`}
-                  className="text-sm font-normal cursor-pointer flex items-center gap-1.5"
-                >
-                  <div
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: currency.color }}
-                  />
-                  {currency.code.toUpperCase()}
-                </Label>
-              </div>
-            ))}
-          </div>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className="w-full justify-start text-left font-normal"
+              >
+                <span className="flex items-center gap-2 flex-wrap">
+                  {selectedCurrencies.length > 0 ? (
+                    <>
+                      {selectedCurrencies.slice(0, 3).map((code) => {
+                        const currency = AVAILABLE_CURRENCIES.find(
+                          (c) => c.code === code,
+                        );
+                        return (
+                          <Badge
+                            key={code}
+                            variant="secondary"
+                            className="gap-1.5"
+                          >
+                            <div
+                              className="w-2 h-2 rounded-full"
+                              style={{ backgroundColor: currency?.color }}
+                            />
+                            {code.toUpperCase()}
+                          </Badge>
+                        );
+                      })}
+                      {selectedCurrencies.length > 3 && (
+                        <Badge variant="secondary">
+                          +{selectedCurrencies.length - 3} more
+                        </Badge>
+                      )}
+                    </>
+                  ) : (
+                    <span className="text-muted-foreground">
+                      Select currencies...
+                    </span>
+                  )}
+                </span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[300px] p-0" align="start">
+              <ScrollArea className="h-[300px]">
+                <div className="p-4 space-y-2">
+                  {AVAILABLE_CURRENCIES.map((currency) => (
+                    <label
+                      key={currency.code}
+                      htmlFor={`currency-${currency.code}`}
+                      className="flex items-center space-x-2 hover:bg-accent rounded-md p-2 cursor-pointer"
+                    >
+                      <Checkbox
+                        id={`currency-${currency.code}`}
+                        checked={selectedCurrencies.includes(currency.code)}
+                        onCheckedChange={() => toggleCurrency(currency.code)}
+                        data-testid={`checkbox-currency-${currency.code}`}
+                      />
+                      <span className="flex items-center gap-2 flex-1">
+                        <div
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: currency.color }}
+                        />
+                        <span className="text-xs font-light text-muted-foreground">
+                          {currency.code.toUpperCase()}
+                        </span>
+                        <span className="text-sm font-normal">
+                          {currency.name}
+                        </span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </ScrollArea>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 
@@ -258,9 +303,9 @@ export function HistoricalChart() {
                 labelFormatter={(value) =>
                   format(new Date(value), 'MMMM d, yyyy')
                 }
-                formatter={(value: any) => [
+                formatter={(value: any, name: string) => [
                   Number.parseFloat(value).toFixed(4),
-                  '',
+                  name.toUpperCase(),
                 ]}
               />
               <Legend />

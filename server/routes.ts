@@ -1,73 +1,100 @@
-import { createServer, type Server } from "node:http";
-import type { Express } from "express";
+import { access } from 'node:fs/promises';
+import { createServer, type Server } from 'node:http';
+import path from 'node:path';
+import type { Express, Request, Response } from 'express';
 
-const API_BASE_URL = process.env.VITE_API_BASE_URL || "http://localhost:8490";
+// Import our new local data functions
+import {
+  cache,
+  getLatestRate,
+  getRatesForCurrencies,
+  type RateRecordResponse,
+} from './data/rates-service.ts';
+
+// Use import.meta.dirname for ES Modules
+const DATA_DIR = path.resolve(import.meta.dirname, '../currency_data');
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Proxy endpoint for getting latest rate for a specific currency
-  app.get("/api/rates/:currency/latest", async (req, res) => {
-    try {
-      const { currency } = req.params;
-      const url = `${API_BASE_URL}/api/rates/${currency}/latest`;
+  // --- REPLACED ENDPOINT for latest rate ---
+  app.get(
+    '/api/rates/:currency/latest',
+    async (req: Request, res: Response) => {
+      const currencyCode = req.params.currency.toLowerCase();
+      const filePath = path.join(DATA_DIR, `${currencyCode}.csv`);
+      const cacheKey = `latest:${currencyCode}`;
 
-      const response = await fetch(url);
-
-      if (!response.ok) {
-        return res.status(response.status).json({
-          error: `Failed to fetch data for ${currency}`
-        });
+      const cachedData = cache.get<RateRecordResponse>(cacheKey);
+      if (cachedData) {
+        return res.status(200).json(cachedData);
       }
 
-      const data = await response.json();
-      return res.json(data);
-    } catch (error) {
-      console.error("Error fetching latest rate:", error);
-      return res.status(500).json({
-        error: "Internal server error while fetching currency data"
-      });
+      try {
+        await access(filePath);
+        const latestRecord = await getLatestRate(filePath);
+        if (latestRecord) {
+          cache.set(cacheKey, latestRecord);
+          return res.status(200).json(latestRecord);
+        }
+        return res.status(404).json({
+          error: `No rate records found for currency '${currencyCode}'.`,
+        });
+      } catch {
+        return res
+          .status(404)
+          .json({ error: `Data for currency '${currencyCode}' not found.` });
+      }
+    },
+  );
+
+  // --- REPLACED ENDPOINT for historical rates ---
+  app.get('/api/rates', async (req: Request, res: Response) => {
+    const { startDate, endDate, currencies } = req.query;
+
+    if (
+      !startDate ||
+      !endDate ||
+      !currencies ||
+      typeof startDate !== 'string' ||
+      typeof endDate !== 'string' ||
+      typeof currencies !== 'string'
+    ) {
+      return res.status(400).json({ error: 'Missing or invalid parameters.' });
     }
-  });
 
-  // Proxy endpoint for getting historical rates
-  app.get("/api/rates", async (req, res) => {
+    const currencyCodes = currencies
+      .toLowerCase()
+      .split(',')
+      .filter((c) => c.trim() !== '');
+    if (currencyCodes.length === 0) {
+      return res
+        .status(400)
+        .json({ error: 'The currencies parameter cannot be empty.' });
+    }
+
+    const cacheKey = `rates:${startDate}:${endDate}:${currencyCodes.sort().join(',')}`;
+
+    const cachedData =
+      cache.get<Record<string, RateRecordResponse[]>>(cacheKey);
+    if (cachedData) {
+      return res.status(200).json(cachedData);
+    }
+
     try {
-      const { startDate, endDate, currencies } = req.query;
-
-      // Validate required parameters
-      if (!startDate || !endDate || !currencies) {
-        return res.status(400).json({
-          error: "Missing required parameters: startDate, endDate, and currencies"
-        });
-      }
-
-      // Build the query string
-      const queryParams = new URLSearchParams({
-        startDate: startDate as string,
-        endDate: endDate as string,
-        currencies: currencies as string
-      });
-
-      const url = `${API_BASE_URL}/api/rates?${queryParams}`;
-
-      const response = await fetch(url);
-
-      if (!response.ok) {
-        return res.status(response.status).json({
-          error: "Failed to fetch historical rate data"
-        });
-      }
-
-      const data = await response.json();
-      return res.json(data);
+      const data = await getRatesForCurrencies(
+        currencyCodes,
+        startDate,
+        endDate,
+      );
+      cache.set(cacheKey, data);
+      return res.status(200).json(data);
     } catch (error) {
-      console.error("Error fetching historical rates:", error);
-      return res.status(500).json({
-        error: "Internal server error while fetching historical data"
-      });
+      console.error('Error fetching currency data:', error);
+      return res
+        .status(500)
+        .json({ error: 'An internal server error occurred.' });
     }
   });
 
   const httpServer = createServer(app);
-
   return httpServer;
 }

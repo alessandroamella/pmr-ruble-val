@@ -1,8 +1,13 @@
-import express, { type NextFunction, type Request, type Response } from "express";
-import { registerRoutes } from "./routes";
-import { log, serveStatic, setupVite } from "./vite";
+import express, {
+  type NextFunction,
+  type Request,
+  type Response,
+} from 'express';
+import { registerRoutes } from './routes';
+import { log, serveStatic, setupVite } from './vite';
 
-import "dotenv/config";
+import 'dotenv/config';
+import { startCronJob } from './data/cron-updater';
 
 const app = express();
 app.use(express.json());
@@ -19,9 +24,9 @@ app.use((req, res, next) => {
     return originalResJson.apply(res, [bodyJson, ...args]);
   };
 
-  res.on("finish", () => {
+  res.on('finish', () => {
     const duration = Date.now() - start;
-    if (path.startsWith("/api")) {
+    if (path.startsWith('/api')) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse) {
         logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
@@ -39,20 +44,25 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Start the cron job to keep currency data fresh
+  startCronJob();
+
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
+    const message = err.message || 'Internal Server Error';
+
+    console.error(`Error encountered: ${message}`, err);
 
     res.status(status).json({ message });
-    throw err;
+    // throw err;
   });
 
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
+  if (app.get('env') === 'development') {
     await setupVite(app, server);
   } else {
     serveStatic(app);
@@ -62,15 +72,19 @@ app.use((req, res, next) => {
   // Other ports are firewalled. Default to 5000 if not specified.
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const port = Number.parseInt(process.env.SERVER_PORT || "5000", 10);
+  const { SERVER_PORT } = process.env;
+  if (!SERVER_PORT) {
+    throw new Error('Environment variable SERVER_PORT is not set');
+  }
+  const port = Number.parseInt(SERVER_PORT, 10);
   server.listen(
     {
       port,
-      host: "0.0.0.0",
-      reusePort: true
+      host: '0.0.0.0',
+      reusePort: true,
     },
     () => {
       log(`serving on port ${port}`);
-    }
+    },
   );
 })();
