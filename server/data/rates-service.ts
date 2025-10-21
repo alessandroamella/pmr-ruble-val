@@ -100,3 +100,36 @@ export async function getLatestRate(
       );
   });
 }
+
+export async function getAllLatestRates(): Promise<
+  Record<string, RateRecordResponse | null>
+> {
+  const { readdir } = await import('node:fs/promises');
+  const files = await readdir(DATA_DIR);
+  const csvFiles = files.filter((file) => file.endsWith('.csv'));
+
+  const results: Record<string, RateRecordResponse | null> = {};
+
+  const promises = csvFiles.map(async (file) => {
+    const currencyCode = file.replace('.csv', '');
+    const filePath = path.join(DATA_DIR, file);
+    try {
+      const latestRecord = await getLatestRate(filePath);
+      return { code: currencyCode, record: latestRecord, success: true };
+    } catch (error) {
+      console.warn(
+        `Could not get latest rate for currency: ${currencyCode}`,
+        error,
+      );
+      return { code: currencyCode, record: null, success: false };
+    }
+  });
+
+  const settledResults = await Promise.all(promises);
+
+  for (const result of settledResults) {
+    results[result.code] = result.record;
+  }
+
+  return results;
+}

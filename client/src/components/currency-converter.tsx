@@ -1,5 +1,5 @@
 import { AVAILABLE_CURRENCIES, type LatestRate } from '@shared/schema';
-import { useQueries } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { ArrowRightLeft } from 'lucide-react';
 import { useEffect, useId, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -88,16 +88,15 @@ const CurrencySelector = ({
 };
 
 export function CurrencyConverter() {
-  // 1. Data Fetching - Fetch all latest rates individually (same as RatesTable)
-  const results = useQueries({
-    queries: AVAILABLE_CURRENCIES.map((currency) => ({
-      queryKey: [`/api/rates/${currency.code}/latest`],
-      staleTime: 1000 * 60 * 5, // Cache rates for 5 minutes
-    })),
+  // 1. Data Fetching - Fetch all latest rates in a single request
+  const {
+    data: allRates,
+    isLoading,
+    isError,
+  } = useQuery<Record<string, LatestRate | null>>({
+    queryKey: ['/api/rates/latest'],
+    staleTime: 1000 * 60 * 5, // Cache rates for 5 minutes
   });
-
-  const isLoading = results.some((r) => r.isLoading);
-  const isError = results.some((r) => r.isError);
 
   // 2. State Management
   const [amount, setAmount] = useState('20');
@@ -115,7 +114,7 @@ export function CurrencyConverter() {
 
   // 4. Conversion Logic
   useEffect(() => {
-    if (isLoading || !amount) {
+    if (isLoading || !amount || !allRates) {
       setResult('');
       return;
     }
@@ -126,19 +125,9 @@ export function CurrencyConverter() {
       return;
     }
 
-    // Helper to find rate data by currency code
-    const findRateData = (code: string) => {
-      const currencyIndex = AVAILABLE_CURRENCIES.findIndex(
-        (c) => c.code.toUpperCase() === code.toUpperCase(),
-      );
-      if (currencyIndex === -1) return null;
-      const queryResult = results[currencyIndex];
-      return queryResult.data as LatestRate | undefined;
-    };
-
     let finalResult = 0;
 
-    const rateData = findRateData(selectedCurrency);
+    const rateData = allRates[selectedCurrency.toLowerCase()];
     if (rateData) {
       const ratePerOne = Number.parseFloat(rateData.rate);
 
@@ -152,7 +141,7 @@ export function CurrencyConverter() {
     }
 
     setResult(finalResult > 0 ? finalResult.toFixed(4) : '');
-  }, [amount, selectedCurrency, isPmrToForeign, results, isLoading]);
+  }, [amount, selectedCurrency, isPmrToForeign, allRates, isLoading]);
 
   // 5. Swap Handler
   const handleSwap = () => {

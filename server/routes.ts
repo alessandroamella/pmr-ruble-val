@@ -3,9 +3,9 @@ import { createServer, type Server } from 'node:http';
 import path from 'node:path';
 import type { Express, Request, Response } from 'express';
 
-// Import our new local data functions
 import {
   cache,
+  getAllLatestRates,
   getLatestRate,
   getRatesForCurrencies,
   type RateRecordResponse,
@@ -13,7 +13,29 @@ import {
 import { DATA_DIR } from './data-dir.ts';
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // --- REPLACED ENDPOINT for latest rate ---
+  // Endpoint for latest rates for all currencies
+  app.get('/api/rates/latest', async (_req: Request, res: Response) => {
+    const cacheKey = 'latest:all';
+
+    const cachedData =
+      cache.get<Record<string, RateRecordResponse | null>>(cacheKey);
+    if (cachedData) {
+      return res.status(200).json(cachedData);
+    }
+
+    try {
+      const allLatestRates = await getAllLatestRates();
+      cache.set(cacheKey, allLatestRates);
+      return res.status(200).json(allLatestRates);
+    } catch (error) {
+      console.error('Error fetching all latest rates:', error);
+      return res
+        .status(500)
+        .json({ error: 'An internal server error occurred.' });
+    }
+  });
+
+  // Endpoint for latest rate
   app.get(
     '/api/rates/:currency/latest',
     async (req: Request, res: Response) => {
@@ -44,7 +66,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     },
   );
 
-  // --- REPLACED ENDPOINT for historical rates ---
+  // Endpoint for historical rates
   app.get('/api/rates', async (req: Request, res: Response) => {
     const { startDate, endDate, currencies } = req.query;
 

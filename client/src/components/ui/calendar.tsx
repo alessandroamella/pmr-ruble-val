@@ -2,14 +2,10 @@
 
 import { endOfDay, getMonth, getYear } from 'date-fns';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useMemo } from 'react';
 import DatePicker from 'react-datepicker';
 import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-
-// Import the CSS for react-datepicker. You can do this here or in a global CSS file.
-// If you do it globally (e.g., in your layout.tsx or App.tsx), you can remove this line.
-import 'react-datepicker/dist/react-datepicker.css';
-import { useMemo } from 'react';
 
 const STARTING_YEAR = 2005; // Data published since 2005
 

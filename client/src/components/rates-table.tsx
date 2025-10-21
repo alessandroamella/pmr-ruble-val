@@ -13,18 +13,13 @@ import {
 } from '@/components/ui/table';
 
 export function RatesTable() {
-  // Fetch all latest rates
-  const queries = AVAILABLE_CURRENCIES.map((currency) => ({
-    queryKey: [`/api/rates/${currency.code}/latest`],
-    currency,
-  }));
-
-  const results = queries.map(({ queryKey, currency }) => ({
-    currency,
-    query: useQuery<LatestRate>({ queryKey }),
-  }));
-
-  const isLoading = results.some((r) => r.query.isLoading);
+  // Fetch all latest rates in a single request
+  const { data: allRates, isLoading } = useQuery<
+    Record<string, LatestRate | null>
+  >({
+    queryKey: ['/api/rates/latest'],
+    staleTime: 1000 * 60 * 5, // Cache rates for 5 minutes
+  });
 
   return (
     <div className="md:rounded-md border-t md:border border-card-border overflow-x-hidden">
@@ -59,50 +54,53 @@ export function RatesTable() {
                     </TableCell>
                   </TableRow>
                 ))
-              : results.map(({ currency, query }) => (
-                  <TableRow
-                    key={currency.code}
-                    className="hover-elevate"
-                    data-testid={`row-currency-${currency.code}`}
-                  >
-                    <TableCell className="font-medium">
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-3 h-3 rounded-full"
-                          style={{ backgroundColor: currency.color }}
-                        />
-                        {currency.name}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="secondary"
-                        className="font-mono uppercase"
-                      >
-                        {currency.code}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {query.data ? (
-                        <span
-                          className="font-mono font-semibold text-base"
-                          data-testid={`text-rate-${currency.code}`}
+              : AVAILABLE_CURRENCIES.map((currency) => {
+                  const rateData = allRates?.[currency.code];
+                  return (
+                    <TableRow
+                      key={currency.code}
+                      className="hover-elevate"
+                      data-testid={`row-currency-${currency.code}`}
+                    >
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: currency.color }}
+                          />
+                          {currency.name}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="secondary"
+                          className="font-mono uppercase"
                         >
-                          {Number.parseFloat(query.data.rate).toFixed(4)}
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground text-sm">
-                          N/A
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {query.data
-                        ? format(new Date(query.data.date), 'MMM d, yyyy')
-                        : 'N/A'}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                          {currency.code}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {rateData ? (
+                          <span
+                            className="font-mono font-semibold text-base"
+                            data-testid={`text-rate-${currency.code}`}
+                          >
+                            {Number.parseFloat(rateData.rate).toFixed(4)}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">
+                            N/A
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {rateData
+                          ? format(new Date(rateData.date), 'MMM d, yyyy')
+                          : 'N/A'}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
           </TableBody>
         </Table>
       </div>
