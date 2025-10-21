@@ -9,8 +9,8 @@
     "start": "NODE_ENV=production node dist/index.js",
     "check": "biome check && tsc",
     "check:write": "biome check --write",
-    "scrape:full": "tsx server/data/scraper.ts",
-    "update:now": "tsx -e 'import { updateRates } from \"./server/data/cron-updater.ts\"; updateRates();'"
+    "scrape:full": "tsx server/official-data/full-scraper.ts",
+    "update:now": "tsx -e 'import { updateRates } from \"./server/official-data/cron-updater.ts\"; updateRates();'"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

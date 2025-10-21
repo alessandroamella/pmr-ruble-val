@@ -6,7 +6,7 @@ import { createObjectCsvWriter } from 'csv-writer';
 import { addDays, format, subDays } from 'date-fns';
 import cron from 'node-cron';
 import { envs } from 'server/config/envs';
-import { DATA_DIR } from 'server/data-dir';
+import { CURRENCIES_CSV_DATA_DIR } from 'server/official-data/currencies-csv-data-dir';
 import { CURRENCIES, fetchCurrencyData, sleep } from './scraper-logic';
 
 // const CRON_SCHEDULE = '0 */4 * * *'; // Runs at the start of every 4th hour
@@ -85,7 +85,7 @@ export async function updateRates() {
       continue;
     }
     const fileName = `${letterCode.toLowerCase()}.csv`;
-    const filePath = path.resolve(DATA_DIR, fileName);
+    const filePath = path.resolve(CURRENCIES_CSV_DATA_DIR, fileName);
 
     // 3. Read existing data from the CSV.
     const existingRecords = await readCsvFile(filePath);

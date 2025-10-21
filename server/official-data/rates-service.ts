@@ -3,7 +3,7 @@ import { access } from 'node:fs/promises';
 import path from 'node:path';
 import csv from 'csv-parser';
 import NodeCache from 'node-cache';
-import { DATA_DIR } from 'server/data-dir';
+import { CURRENCIES_CSV_DATA_DIR } from 'server/official-data/currencies-csv-data-dir';
 
 // Initialize cache with a TTL of 5 minutes (300 seconds)
 export const cache = new NodeCache({ stdTTL: 300, checkperiod: 60 });
@@ -55,7 +55,7 @@ export async function getRatesForCurrencies(
   const results: Record<string, RateRecordResponse[]> = {};
 
   const promises = currencyCodes.map(async (code) => {
-    const filePath = path.join(DATA_DIR, `${code}.csv`);
+    const filePath = path.join(CURRENCIES_CSV_DATA_DIR, `${code}.csv`);
     try {
       await access(filePath);
       const records = await readAndFilterCsv(filePath, startDate, endDate);
@@ -105,14 +105,14 @@ export async function getAllLatestRates(): Promise<
   Record<string, RateRecordResponse | null>
 > {
   const { readdir } = await import('node:fs/promises');
-  const files = await readdir(DATA_DIR);
+  const files = await readdir(CURRENCIES_CSV_DATA_DIR);
   const csvFiles = files.filter((file) => file.endsWith('.csv'));
 
   const results: Record<string, RateRecordResponse | null> = {};
 
   const promises = csvFiles.map(async (file) => {
     const currencyCode = file.replace('.csv', '');
-    const filePath = path.join(DATA_DIR, file);
+    const filePath = path.join(CURRENCIES_CSV_DATA_DIR, file);
     try {
       const latestRecord = await getLatestRate(filePath);
       return { code: currencyCode, record: latestRecord, success: true };

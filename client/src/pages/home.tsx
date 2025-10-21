@@ -83,7 +83,7 @@ export default function Home() {
     isLoading: eurLoading,
     isError: eurError,
   } = useQuery<LatestRate>({
-    queryKey: ['/api/rates/eur/latest'],
+    queryKey: ['/api/official-rates/eur/latest'],
     retry: 2,
   });
 
@@ -93,7 +93,7 @@ export default function Home() {
     isLoading: usdLoading,
     isError: usdError,
   } = useQuery<LatestRate>({
-    queryKey: ['/api/rates/usd/latest'],
+    queryKey: ['/api/official-rates/usd/latest'],
     retry: 2,
   });
 

@@ -94,7 +94,7 @@ export function CurrencyConverter() {
     isLoading,
     isError,
   } = useQuery<Record<string, LatestRate | null>>({
-    queryKey: ['/api/rates/latest'],
+    queryKey: ['/api/official-rates/latest'],
     staleTime: 1000 * 60 * 5, // Cache rates for 5 minutes
   });
 

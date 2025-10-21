@@ -48,7 +48,7 @@ export function HistoricalChart() {
   // Fetch historical data
   const { data, isLoading, error } = useQuery<RatesResponse>({
     queryKey: [
-      '/api/rates',
+      '/api/official-rates/historical',
       {
         startDate: formatDate(startDate),
         endDate: formatDate(endDate),

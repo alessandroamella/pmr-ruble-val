@@ -6,7 +6,7 @@ import { createObjectCsvWriter } from 'csv-writer';
 import { format, startOfDay, subYears } from 'date-fns';
 import pLimit from 'p-limit';
 import { envs } from 'server/config/envs';
-import { DATA_DIR } from 'server/data-dir';
+import { CURRENCIES_CSV_DATA_DIR } from 'server/official-data/currencies-csv-data-dir';
 import { CURRENCIES, fetchCurrencyData, sleep } from './scraper-logic';
 
 // Change this range to fetch historical data
@@ -53,7 +53,6 @@ async function readCsvFile(filePath: string): Promise<SimpleRateRecord[]> {
 }
 
 /**
- * --- NEW REFACTORED FUNCTION ---
  * Processes a single currency: fetches data, reads existing CSV, merges, and writes the result.
  * This function encapsulates the logic that was previously inside the main loop.
  * @param code The currency code (e.g., 'R01235').
@@ -154,8 +153,8 @@ async function main() {
     `Date range: ${formatDate(START_DATE)} to ${formatDate(END_DATE)}\n`,
   );
 
-  await fs.mkdir(DATA_DIR, { recursive: true });
-  console.log(`Saving CSV files to: ${DATA_DIR}\n`);
+  await fs.mkdir(CURRENCIES_CSV_DATA_DIR, { recursive: true });
+  console.log(`Saving CSV files to: ${CURRENCIES_CSV_DATA_DIR}\n`);
 
   // Create a limiter that will execute at most PARALLEL_FETCHES promises concurrently.
   const limit = pLimit(PARALLEL_FETCHES);
@@ -163,7 +162,7 @@ async function main() {
   // Create an array of task-running promises.
   // Each task is wrapped in the limiter.
   const tasks = Object.entries(CURRENCIES).map(([code, name]) => {
-    return limit(() => processCurrency(code, name, DATA_DIR));
+    return limit(() => processCurrency(code, name, CURRENCIES_CSV_DATA_DIR));
   });
 
   // Wait for all the tasks to complete.

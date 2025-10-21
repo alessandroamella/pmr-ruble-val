@@ -1,120 +1,13 @@
-import { access } from 'node:fs/promises';
 import { createServer, type Server } from 'node:http';
-import path from 'node:path';
-import type { Express, Request, Response } from 'express';
-
-import {
-  cache,
-  getAllLatestRates,
-  getLatestRate,
-  getRatesForCurrencies,
-  type RateRecordResponse,
-} from './data/rates-service.ts';
-import { DATA_DIR } from './data-dir.ts';
+import type { Express } from 'express';
+import exchangeRatesRoutes from './exchange-rates/exchange-rates.controller.ts';
+import officialDataRoutes from './official-data/official-data.controller.ts';
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Endpoint for latest rates for all currencies
-  app.get('/api/rates/latest', async (_req: Request, res: Response) => {
-    const cacheKey = 'latest:all';
-
-    const cachedData =
-      cache.get<Record<string, RateRecordResponse | null>>(cacheKey);
-    if (cachedData) {
-      return res.status(200).json(cachedData);
-    }
-
-    try {
-      const allLatestRates = await getAllLatestRates();
-      cache.set(cacheKey, allLatestRates);
-      return res.status(200).json(allLatestRates);
-    } catch (error) {
-      console.error('Error fetching all latest rates:', error);
-      return res
-        .status(500)
-        .json({ error: 'An internal server error occurred.' });
-    }
-  });
-
-  // Endpoint for latest rate
-  app.get(
-    '/api/rates/:currency/latest',
-    async (req: Request, res: Response) => {
-      const currencyCode = req.params.currency.toLowerCase();
-      const filePath = path.join(DATA_DIR, `${currencyCode}.csv`);
-      const cacheKey = `latest:${currencyCode}`;
-
-      const cachedData = cache.get<RateRecordResponse>(cacheKey);
-      if (cachedData) {
-        return res.status(200).json(cachedData);
-      }
-
-      try {
-        await access(filePath);
-        const latestRecord = await getLatestRate(filePath);
-        if (latestRecord) {
-          cache.set(cacheKey, latestRecord);
-          return res.status(200).json(latestRecord);
-        }
-        return res.status(404).json({
-          error: `No rate records found for currency '${currencyCode}'.`,
-        });
-      } catch {
-        return res
-          .status(404)
-          .json({ error: `Data for currency '${currencyCode}' not found.` });
-      }
-    },
-  );
-
-  // Endpoint for historical rates
-  app.get('/api/rates', async (req: Request, res: Response) => {
-    const { startDate, endDate, currencies } = req.query;
-
-    if (
-      !startDate ||
-      !endDate ||
-      !currencies ||
-      typeof startDate !== 'string' ||
-      typeof endDate !== 'string' ||
-      typeof currencies !== 'string'
-    ) {
-      return res.status(400).json({ error: 'Missing or invalid parameters.' });
-    }
-
-    const currencyCodes = currencies
-      .toLowerCase()
-      .split(',')
-      .filter((c) => c.trim() !== '');
-    if (currencyCodes.length === 0) {
-      return res
-        .status(400)
-        .json({ error: 'The currencies parameter cannot be empty.' });
-    }
-
-    const cacheKey = `rates:${startDate}:${endDate}:${currencyCodes.sort().join(',')}`;
-
-    const cachedData =
-      cache.get<Record<string, RateRecordResponse[]>>(cacheKey);
-    if (cachedData) {
-      return res.status(200).json(cachedData);
-    }
-
-    try {
-      const data = await getRatesForCurrencies(
-        currencyCodes,
-        startDate,
-        endDate,
-      );
-      cache.set(cacheKey, data);
-      return res.status(200).json(data);
-    } catch (error) {
-      console.error('Error fetching currency data:', error);
-      return res
-        .status(500)
-        .json({ error: 'An internal server error occurred.' });
-    }
-  });
-
   const httpServer = createServer(app);
+
+  app.use('/api/official-rates', officialDataRoutes);
+  app.use('/api/exchange-rates', exchangeRatesRoutes);
+
   return httpServer;
 }

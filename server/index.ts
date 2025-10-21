@@ -7,7 +7,7 @@ import express, {
 } from 'express';
 import helmet from 'helmet';
 import { envs } from './config/envs';
-import { startCronJob } from './data/cron-updater';
+import { startCronJob } from './official-data/cron-updater';
 import { registerRoutes } from './routes';
 import { log, serveStatic, setupVite } from './vite';
 
