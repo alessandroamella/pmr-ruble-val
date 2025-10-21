@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowUpRight, Info, TrendingUp } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { FaGithub } from 'react-icons/fa';
 import { ApiStatusBanner } from '@/components/api-status-banner';
 import { CurrencyConverter } from '@/components/currency-converter';
 import { HistoricalChart } from '@/components/historical-chart';
@@ -341,6 +342,17 @@ export default function Home() {
               Pridnestrovian Republican Bank
             </a>
             .
+          </p>
+          <p className="text-xs text-muted-foreground text-center mt-3">
+            <FaGithub className="inline mr-1" />
+            <a
+              href="https://github.com/alessandroamella/pmr-ruble-val"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-foreground transition-colors"
+            >
+              View on GitHub
+            </a>
           </p>
         </div>
       </footer>
