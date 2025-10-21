@@ -15,9 +15,6 @@ export type CalendarProps = {
   selected?: Date | null;
   onSelect: (date: Date | null) => void;
   disabled?: (date: Date) => boolean;
-  // Add any other props from react-datepicker you want to expose
-  // e.g., minDate, maxDate, etc.
-  [key: string]: any;
 };
 
 const months = [

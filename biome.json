@@ -58,7 +58,6 @@
         "noUnknownAtRules": "off",
         "useIterableCallbackReturn": "off",
         "noArrayIndexKey": "off",
-        "noExplicitAny": "off",
         "noEmptyBlock": "off",
         "noDocumentCookie": "off"
       }

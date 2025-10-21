@@ -86,7 +86,7 @@ export function HistoricalChart() {
 
     // Create chart data points
     return sortedDates.map((date) => {
-      const point: any = { date };
+      const point: { date: string; [key: string]: number | string } = { date };
 
       selectedCurrencies.forEach((code) => {
         const rateData = data[code]?.find((r) => r.date === date);
@@ -307,7 +307,7 @@ export function HistoricalChart() {
                 labelFormatter={(value) =>
                   format(new Date(value), 'MMMM d, yyyy')
                 }
-                formatter={(value: any, name: string) => [
+                formatter={(value: string, name: string) => [
                   Number.parseFloat(value).toFixed(4),
                   name.toUpperCase(),
                 ]}
