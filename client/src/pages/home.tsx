@@ -5,7 +5,8 @@ import { format } from 'date-fns';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowUpRight, Info, TrendingUp } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { FaGithub } from 'react-icons/fa';
+import { FaEnvelope, FaGithub } from 'react-icons/fa';
+import Obfuscate from 'react-obfuscate';
 import { ApiStatusBanner } from '@/components/api-status-banner';
 import { CurrencyConverter } from '@/components/currency-converter';
 import { HistoricalChart } from '@/components/historical-chart';
@@ -55,6 +56,11 @@ const contentVariants = {
   exit: { opacity: 0, y: -10 },
   transition: { duration: 0.3 },
 };
+
+const contactEmail = import.meta.env.VITE_CONTACT_EMAIL;
+if (!contactEmail) {
+  throw new Error('VITE_CONTACT_EMAIL is not defined in environment variables');
+}
 
 export default function Home() {
   const today = new Date();
@@ -353,6 +359,17 @@ export default function Home() {
             >
               View on GitHub
             </a>
+            <span className="text-muted-foreground mx-1"> • </span>
+            <FaEnvelope className="inline mr-1" />
+            <Obfuscate
+              email={contactEmail}
+              headers={{
+                subject: 'PMR Ruble Exchange Rates',
+              }}
+              style={{ textDecoration: 'underline' }}
+            >
+              Contact
+            </Obfuscate>
           </p>
         </div>
       </footer>

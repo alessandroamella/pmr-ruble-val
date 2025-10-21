@@ -9,6 +9,5 @@ export const envs = cleanEnv(process.env, {
     default: 'development',
   }),
   RUN_ON_STARTUP: bool({ default: false }),
-  CSP_NONCE: str(),
   PARALLEL_FETCHES: num({ default: 3 }),
 });
