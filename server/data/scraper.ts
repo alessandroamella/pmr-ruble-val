@@ -1,31 +1,20 @@
-// src/scraper.ts
-// This script generates a simplified CSV file for each currency, named by its letter code (e.g., usd.csv).
-// It now reads existing data, merges new data, and writes the sorted result, preventing data loss.
-// REFACTORED to run a configurable number of fetches in parallel for significant speed improvements.
-
-// --- IMPORTS ---
 import { createReadStream, promises as fs } from 'node:fs';
 import { access } from 'node:fs/promises';
 import path from 'node:path';
 import csv from 'csv-parser';
 import { createObjectCsvWriter } from 'csv-writer';
 import { format, startOfDay, subYears } from 'date-fns';
-import pLimit from 'p-limit'; // --- NEW: Library for concurrency control
+import pLimit from 'p-limit';
+import { envs } from 'server/config/envs';
 import { DATA_DIR } from 'server/data-dir';
 import { CURRENCIES, fetchCurrencyData, sleep } from './scraper-logic';
 
-// --- SCRIPT-SPECIFIC CONFIGURATION ---
-
-// You can change this range to fetch historical data.
+// Change this range to fetch historical data
 const today = startOfDay(new Date());
 const START_DATE = subYears(today, 5); // 5 years ago from today
 const END_DATE = today; // Up to today
 
-// --- NEW: Concurrency configuration ---
-// Sets how many currencies to fetch and process at the same time.
-const PARALLEL_FETCHES = 3;
-
-// --- HELPER INTERFACE AND FUNCTIONS ---
+const { PARALLEL_FETCHES } = envs;
 
 interface SimpleRateRecord {
   Date: string;

@@ -3,12 +3,11 @@ import { access } from 'node:fs/promises';
 import path from 'node:path';
 import csv from 'csv-parser';
 import { createObjectCsvWriter } from 'csv-writer';
-import cron from 'node-cron';
-import { CURRENCIES, fetchCurrencyData, sleep } from './scraper-logic';
-
-import 'dotenv/config';
 import { addDays, format, subDays } from 'date-fns';
+import cron from 'node-cron';
+import { envs } from 'server/config/envs';
 import { DATA_DIR } from 'server/data-dir';
+import { CURRENCIES, fetchCurrencyData, sleep } from './scraper-logic';
 
 // const CRON_SCHEDULE = '0 */4 * * *'; // Runs at the start of every 4th hour
 
@@ -171,7 +170,7 @@ export function startCronJob() {
   console.log(`🕒 Scheduling job with pattern: "${CRON_SCHEDULE}"`);
 
   // Optional: Run on startup
-  if (process.env.RUN_ON_STARTUP === 'true') {
+  if (envs.RUN_ON_STARTUP) {
     console.log('Running initial update on startup...');
     updateRates().catch((err) => console.error('Initial update failed:', err));
   }

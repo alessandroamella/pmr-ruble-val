@@ -1,15 +1,56 @@
+import 'dotenv/config';
+
 import express, {
   type NextFunction,
   type Request,
   type Response,
 } from 'express';
+import helmet from 'helmet';
+import { envs } from './config/envs';
+import { startCronJob } from './data/cron-updater';
 import { registerRoutes } from './routes';
 import { log, serveStatic, setupVite } from './vite';
 
-import 'dotenv/config';
-import { startCronJob } from './data/cron-updater';
-
 const app = express();
+
+if (process.env.NODE_ENV === 'production') {
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: [
+            "'self'",
+            // Dark Reader script hash
+            "'sha256-8vg1dxpb2xvWba+SYoev6j7bPA7dSnd2cHHSE7hRuf0='",
+          ],
+          // 'unsafe-inline' is required for UI libraries like Recharts and Radix UI
+          styleSrc: [
+            "'self'",
+            'https://fonts.googleapis.com',
+            "'unsafe-inline'",
+          ],
+          fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+          connectSrc: ["'self'"],
+          imgSrc: ["'self'", 'data:', 'https://www.ruble.pm/'],
+          objectSrc: ["'none'"],
+          frameAncestors: ["'none'"],
+          formAction: ["'self'"],
+          baseUri: ["'self'"],
+          upgradeInsecureRequests: [],
+        },
+      },
+    }),
+  );
+} else {
+  // In development, keep CSP disabled for Vite HMR and dev tooling
+  app.use(
+    helmet({
+      contentSecurityPolicy: false,
+    }),
+  );
+}
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
@@ -72,11 +113,7 @@ app.use((req, res, next) => {
   // Other ports are firewalled. Default to 5000 if not specified.
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const { SERVER_PORT } = process.env;
-  if (!SERVER_PORT) {
-    throw new Error('Environment variable SERVER_PORT is not set');
-  }
-  const port = Number.parseInt(SERVER_PORT, 10);
+  const port = envs.SERVER_PORT;
   server.listen(
     {
       port,

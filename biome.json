@@ -8,7 +8,7 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "includes": ["client/**/*", "server/**/*", "shared/**/*"]
+    "includes": ["client/**/*", "server/**/*", "shared/**/*", "*.config.*"]
   },
   "formatter": {
     "enabled": true,
