@@ -19,12 +19,8 @@ if (process.env.NODE_ENV === 'production') {
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
-          scriptSrc: [
-            "'self'",
-            // Dark Reader script hash
-            "'sha256-8vg1dxpb2xvWba+SYoev6j7bPA7dSnd2cHHSE7hRuf0='",
-          ],
-          // 'unsafe-inline' is required for UI libraries like Recharts and Radix UI
+          // too hard to nonce all the things, allow unsafe-inline for scripts/styles
+          scriptSrc: ["'self'", "'unsafe-inline'"],
           styleSrc: [
             "'self'",
             'https://fonts.googleapis.com',
@@ -57,7 +53,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined;
+  let capturedJsonResponse: Record<string, unknown> | undefined;
 
   const originalResJson = res.json;
   res.json = (bodyJson, ...args) => {
@@ -90,15 +86,25 @@ app.use((req, res, next) => {
 
   const server = await registerRoutes(app);
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || 'Internal Server Error';
+  app.use(
+    (
+      err: Error & {
+        status?: number;
+        statusCode?: number;
+      },
+      _req: Request,
+      res: Response,
+      _next: NextFunction,
+    ) => {
+      const status = err.status || err.statusCode || 500;
+      const message = err.message || 'Internal Server Error';
 
-    console.error(`Error encountered: ${message}`, err);
+      console.error(`Error encountered: ${message}`, err);
 
-    res.status(status).json({ message });
-    // throw err;
-  });
+      res.status(status).json({ message });
+      // throw err;
+    },
+  );
 
   if (app.get('env') === 'development') {
     await setupVite(app, server);
