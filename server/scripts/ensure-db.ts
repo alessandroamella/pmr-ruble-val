@@ -25,6 +25,7 @@ const absoluteDbPath = dbPath.startsWith('/')
 
 console.log(`🔍 Checking for database file: ${absoluteDbPath}`);
 
+let dbPushed = false;
 if (!existsSync(absoluteDbPath)) {
   console.log('⚠️  Database file not found. Running db:push-schema...');
 
@@ -34,6 +35,7 @@ if (!existsSync(absoluteDbPath)) {
       cwd: projectRoot,
     });
     console.log('✅ Database schema pushed successfully');
+    dbPushed = true;
   } catch {
     console.error('❌ Failed to push database schema');
     process.exit(1);
@@ -43,12 +45,16 @@ if (!existsSync(absoluteDbPath)) {
 }
 
 // now try to push csv data to db
-console.log('🔄 Migrating CSV data to database...');
-migrateCsvToDb()
-  .then(() => {
-    console.log('✅ CSV data migration completed');
-  })
-  .catch((error) => {
-    console.error('❌ CSV data migration failed:', error);
-    process.exit(1);
-  });
+if (dbPushed) {
+  console.log('🔄 Migrating CSV data to database...');
+  migrateCsvToDb()
+    .then(() => {
+      console.log('✅ CSV data migration completed');
+    })
+    .catch((error) => {
+      console.error('❌ CSV data migration failed:', error);
+      process.exit(1);
+    });
+} else {
+  console.log('ℹ️ Database schema already pushed, skipping CSV data migration');
+}
