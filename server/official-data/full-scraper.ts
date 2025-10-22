@@ -1,12 +1,9 @@
-import { createReadStream, promises as fs } from 'node:fs';
-import { access } from 'node:fs/promises';
-import path from 'node:path';
-import csv from 'csv-parser';
-import { createObjectCsvWriter } from 'csv-writer';
 import { format, startOfDay, subYears } from 'date-fns';
+import { sql } from 'drizzle-orm';
 import pLimit from 'p-limit';
 import { envs } from 'server/config/envs';
-import { CURRENCIES_CSV_DATA_DIR } from 'server/official-data/currencies-csv-data-dir';
+import { db } from 'server/db';
+import { exchangeRates, type NewExchangeRate } from 'server/db/schema';
 import { sleep } from 'server/utils/sleep';
 import { CURRENCIES, fetchCurrencyData } from './scraper-logic';
 
@@ -16,11 +13,6 @@ const START_DATE = subYears(today, 5); // 5 years ago from today
 const END_DATE = today; // Up to today
 
 const { PARALLEL_FETCHES } = envs;
-
-interface SimpleRateRecord {
-  Date: string;
-  Rate: string;
-}
 
 /**
  * Formats a Date object to 'yyyy-MM-dd' string.
@@ -32,40 +24,13 @@ function formatDate(date: Date): string {
 }
 
 /**
- * Reads a CSV file and parses it into an array of objects.
- * @param filePath The full path to the CSV file.
- * @returns A promise that resolves to an array of records, or an empty array if the file doesn't exist.
- */
-async function readCsvFile(filePath: string): Promise<SimpleRateRecord[]> {
-  try {
-    await access(filePath);
-  } catch {
-    return []; // File doesn't exist, so no existing records.
-  }
-
-  const records: SimpleRateRecord[] = [];
-  const stream = createReadStream(filePath).pipe(csv());
-
-  return new Promise((resolve, reject) => {
-    stream.on('data', (data) => records.push(data));
-    stream.on('end', () => resolve(records));
-    stream.on('error', (error) => reject(error));
-  });
-}
-
-/**
- * Processes a single currency: fetches data, reads existing CSV, merges, and writes the result.
- * This function encapsulates the logic that was previously inside the main loop.
+ * Processes a single currency: fetches data and inserts it into the database.
+ * This function encapsulates the logic that was previously using CSV files.
  * @param code The currency code (e.g., 'R01235').
  * @param name The currency name (e.g., 'US Dollar').
- * @param outputDir The directory to save the CSV file in.
- * @returns A promise that resolves to true if a file was updated, false otherwise.
+ * @returns A promise that resolves to the number of records upserted, or 0 if failed.
  */
-async function processCurrency(
-  code: string,
-  name: string,
-  outputDir: string,
-): Promise<boolean> {
+async function processCurrency(code: string, name: string): Promise<number> {
   console.log(`[START] Fetching data for: ${name} (${code})`);
 
   try {
@@ -77,85 +42,71 @@ async function processCurrency(
     );
 
     if (currencyRecords.length === 0) {
-      console.warn(
-        ` -> [SKIP] No new records found for ${name}. Skipping CSV creation.`,
-      );
-      return false;
+      console.warn(` -> [SKIP] No records found for ${name}. Skipping.`);
+      return 0;
     }
 
     console.log(
-      ` -> [FETCHED] ${name} (${code}) - Found ${currencyRecords.length} new records.`,
+      ` -> [FETCHED] ${name} (${code}) - Found ${currencyRecords.length} records.`,
     );
 
-    const letterCode = currencyRecords[0].letter_code;
+    const letterCode = currencyRecords[0].letter_code?.toLowerCase();
     if (!letterCode) {
       console.warn(` -> [SKIP] Could not determine letter code for ${name}.`);
-      return false;
+      return 0;
     }
 
-    const fileName = `${letterCode.toLowerCase()}.csv`;
-    const filePath = path.resolve(outputDir, fileName);
-
-    // Read, Merge, Write Logic
-    const existingRecords = await readCsvFile(filePath);
-    const recordsMap = new Map<string, SimpleRateRecord>();
-
-    for (const record of existingRecords) {
-      recordsMap.set(record.Date, record);
-    }
-
-    for (const newRecord of currencyRecords) {
-      const processedRecord = {
-        Date: newRecord.date,
-        Rate: (newRecord.units > 1
-          ? newRecord.rate / newRecord.units
-          : newRecord.rate
-        ).toString(),
+    // Prepare values to insert/update
+    const valuesToInsert: NewExchangeRate[] = currencyRecords.map((rec) => {
+      const rawRate = rec.units > 1 ? rec.rate / rec.units : rec.rate;
+      // Round to 7 decimal places to avoid floating-point precision errors
+      const roundedRate = Math.round(rawRate * 1e7) / 1e7;
+      return {
+        currencyCode: letterCode,
+        date: rec.date,
+        rate: roundedRate,
       };
-      recordsMap.set(processedRecord.Date, processedRecord);
-    }
-
-    const finalRecords = Array.from(recordsMap.values()).sort((a, b) =>
-      a.Date.localeCompare(b.Date),
-    );
-
-    const csvWriter = createObjectCsvWriter({
-      path: filePath,
-      header: [
-        { id: 'Date', title: 'Date' },
-        { id: 'Rate', title: 'Rate' },
-      ],
     });
 
-    await csvWriter.writeRecords(finalRecords);
+    if (valuesToInsert.length === 0) return 0;
+
+    // Upsert into database
+    // If a record with the same primary key (date, currencyCode) exists,
+    // it updates the 'rate'. Otherwise, it inserts a new row.
+    const result = await db
+      .insert(exchangeRates)
+      .values(valuesToInsert)
+      .onConflictDoUpdate({
+        target: [exchangeRates.currencyCode, exchangeRates.date],
+        set: { rate: sql`excluded.rate` },
+      })
+      .returning({ updatedDate: exchangeRates.date });
+
     console.log(
-      `   -> [SAVED] ${name} (${code}) - Saved ${finalRecords.length} total records to ${fileName}`,
+      `   -> [SAVED] ${name} (${code}) - Upserted ${result.length} records to database`,
     );
 
     // Be polite to the server. This sleep is now per-worker, not blocking the entire script.
     await sleep(1000);
 
-    return true;
+    return result.length;
   } catch (error) {
     console.error(` -> [ERROR] Failed to process ${name} (${code}):`, error);
-    return false; // Indicate failure for this currency
+    return 0; // Indicate failure for this currency
   }
 }
 
 /**
- * Main function, now orchestrating parallel processing.
+ * Main function, orchestrating parallel processing and inserting data into the database.
  */
 async function main() {
   console.log(
-    `Starting CSV scraper for ${Object.keys(CURRENCIES).length} currencies...`,
+    `Starting historical data loader for ${Object.keys(CURRENCIES).length} currencies...`,
   );
   console.log(`Concurrency level set to: ${PARALLEL_FETCHES}`);
   console.log(
     `Date range: ${formatDate(START_DATE)} to ${formatDate(END_DATE)}\n`,
   );
-
-  await fs.mkdir(CURRENCIES_CSV_DATA_DIR, { recursive: true });
-  console.log(`Saving CSV files to: ${CURRENCIES_CSV_DATA_DIR}\n`);
 
   // Create a limiter that will execute at most PARALLEL_FETCHES promises concurrently.
   const limit = pLimit(PARALLEL_FETCHES);
@@ -163,23 +114,23 @@ async function main() {
   // Create an array of task-running promises.
   // Each task is wrapped in the limiter.
   const tasks = Object.entries(CURRENCIES).map(([code, name]) => {
-    return limit(() => processCurrency(code, name, CURRENCIES_CSV_DATA_DIR));
+    return limit(() => processCurrency(code, name));
   });
 
   // Wait for all the tasks to complete.
   const results = await Promise.all(tasks);
 
-  // Count how many tasks returned `true` (indicating a successful update).
-  const filesUpdated = results.filter(Boolean).length;
+  // Sum up the total number of records upserted.
+  const totalRecordsUpserted = results.reduce((sum, count) => sum + count, 0);
 
   console.log(
-    `\n🎉 All done! Updated/created ${filesUpdated} CSV files in the 'currency_data' directory.`,
+    `\n🎉 All done! Upserted ${totalRecordsUpserted} total records into the database.`,
   );
 }
 
 main().catch((error) => {
   console.error(
-    'A critical error occurred during the CSV scraping script:',
+    'A critical error occurred during the historical data loading script:',
     error,
   );
   process.exit(1);

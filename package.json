@@ -5,16 +5,18 @@
   "license": "MIT",
   "scripts": {
     "dev": "nodemon --watch server --ext ts --exec \"tsx server/index.ts\"",
+    "prebuild": "tsx server/scripts/ensure-db.ts",
     "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "start": "NODE_ENV=production node dist/index.js",
     "check": "biome check && tsc",
     "check:write": "biome check --write",
     "scrape:full": "tsx server/official-data/full-scraper.ts",
-    "update:now": "tsx -e 'import { updateRates } from \"./server/official-data/cron-updater.ts\"; updateRates();'"
+    "db:push-schema": "drizzle-kit push"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
     "@jridgewell/trace-mapping": "^0.3.25",
+    "@libsql/client": "^0.15.15",
     "@neondatabase/serverless": "^0.10.4",
     "@radix-ui/react-accordion": "^1.2.4",
     "@radix-ui/react-alert-dialog": "^1.1.7",
@@ -55,6 +57,7 @@
     "darkreader": "^4.9.112",
     "date-fns": "^3.6.0",
     "dotenv": "^17.2.3",
+    "drizzle-orm": "^0.44.6",
     "embla-carousel-react": "^8.6.0",
     "envalid": "^8.1.0",
     "express": "^4.21.2",
@@ -109,6 +112,7 @@
     "@types/ws": "^8.5.13",
     "@vitejs/plugin-react": "^4.7.0",
     "autoprefixer": "^10.4.20",
+    "drizzle-kit": "^0.31.5",
     "esbuild": "^0.25.0",
     "nodemon": "^3.1.10",
     "postcss": "^8.4.47",

@@ -1,50 +1,13 @@
-import { createReadStream } from 'node:fs';
-import { access } from 'node:fs/promises';
-import path from 'node:path';
-import csv from 'csv-parser';
+import { and, between, desc, eq, inArray, sql } from 'drizzle-orm';
 import NodeCache from 'node-cache';
-import { CURRENCIES_CSV_DATA_DIR } from 'server/official-data/currencies-csv-data-dir';
+import { db } from 'server/db';
+import { exchangeRates } from 'server/db/schema';
 
-// Initialize cache with a TTL of 5 minutes (300 seconds)
 export const cache = new NodeCache({ stdTTL: 300, checkperiod: 60 });
-
-interface RateRecordCsv {
-  Date: string;
-  Rate: string;
-}
 
 export interface RateRecordResponse {
   date: string;
   rate: string;
-}
-
-async function readAndFilterCsv(
-  filePath: string,
-  startDate: string,
-  endDate: string,
-): Promise<RateRecordResponse[]> {
-  const records: RateRecordResponse[] = [];
-
-  return new Promise((resolve, reject) => {
-    createReadStream(filePath)
-      .pipe(csv())
-      .on('data', (row: RateRecordCsv) => {
-        if (row.Date >= startDate && row.Date <= endDate) {
-          records.push({
-            date: row.Date,
-            rate: row.Rate,
-          });
-        }
-      })
-      .on('end', () => resolve(records))
-      .on('error', (error) =>
-        reject(
-          new Error(
-            `Error processing CSV file at ${filePath}: ${error.message}`,
-          ),
-        ),
-      );
-  });
 }
 
 export async function getRatesForCurrencies(
@@ -52,84 +15,72 @@ export async function getRatesForCurrencies(
   startDate: string,
   endDate: string,
 ): Promise<Record<string, RateRecordResponse[]>> {
-  const results: Record<string, RateRecordResponse[]> = {};
-
-  const promises = currencyCodes.map(async (code) => {
-    const filePath = path.join(CURRENCIES_CSV_DATA_DIR, `${code}.csv`);
-    try {
-      await access(filePath);
-      const records = await readAndFilterCsv(filePath, startDate, endDate);
-      return { code, records, success: true };
-    } catch (error) {
-      console.warn(
-        `Could not find or process data for currency: ${code}`,
-        error,
-      );
-      return { code, records: [], success: false };
-    }
+  const queryResult = await db.query.exchangeRates.findMany({
+    where: and(
+      inArray(exchangeRates.currencyCode, currencyCodes),
+      between(exchangeRates.date, startDate, endDate),
+    ),
+    orderBy: [exchangeRates.date],
   });
 
-  const settledResults = await Promise.all(promises);
+  const results: Record<string, RateRecordResponse[]> = {};
+  currencyCodes.forEach((code) => {
+    results[code] = [];
+  });
 
-  for (const result of settledResults) {
-    results[result.code] = result.records;
+  for (const record of queryResult) {
+    results[record.currencyCode].push({
+      date: record.date,
+      rate: record.rate.toString(),
+    });
   }
-
   return results;
 }
 
 export async function getLatestRate(
-  filePath: string,
+  currencyCode: string,
 ): Promise<RateRecordResponse | null> {
-  let latestRecord: RateRecordResponse | null = null;
-
-  return new Promise((resolve, reject) => {
-    createReadStream(filePath)
-      .pipe(csv())
-      .on('data', (row: RateRecordCsv) => {
-        latestRecord = {
-          date: row.Date,
-          rate: row.Rate,
-        };
-      })
-      .on('end', () => resolve(latestRecord))
-      .on('error', (error) =>
-        reject(
-          new Error(`Error reading CSV file at ${filePath}: ${error.message}`),
-        ),
-      );
+  const result = await db.query.exchangeRates.findFirst({
+    where: eq(exchangeRates.currencyCode, currencyCode),
+    orderBy: [desc(exchangeRates.date)],
   });
+
+  return result ? { date: result.date, rate: result.rate.toString() } : null;
 }
 
 export async function getAllLatestRates(): Promise<
   Record<string, RateRecordResponse | null>
 > {
-  const { readdir } = await import('node:fs/promises');
-  const files = await readdir(CURRENCIES_CSV_DATA_DIR);
-  const csvFiles = files.filter((file) => file.endsWith('.csv'));
+  // This advanced query groups by currency and finds the latest date for each one.
+  const sq = db
+    .select({
+      currencyCode: exchangeRates.currencyCode,
+      maxDate: sql<string>`max(${exchangeRates.date})`.as('max_date'),
+    })
+    .from(exchangeRates)
+    .groupBy(exchangeRates.currencyCode)
+    .as('sq');
 
-  const results: Record<string, RateRecordResponse | null> = {};
+  const queryResult = await db
+    .select({
+      code: exchangeRates.currencyCode,
+      date: exchangeRates.date,
+      rate: exchangeRates.rate,
+    })
+    .from(exchangeRates)
+    .innerJoin(
+      sq,
+      and(
+        eq(exchangeRates.currencyCode, sq.currencyCode),
+        eq(exchangeRates.date, sq.maxDate),
+      ),
+    );
 
-  const promises = csvFiles.map(async (file) => {
-    const currencyCode = file.replace('.csv', '');
-    const filePath = path.join(CURRENCIES_CSV_DATA_DIR, file);
-    try {
-      const latestRecord = await getLatestRate(filePath);
-      return { code: currencyCode, record: latestRecord, success: true };
-    } catch (error) {
-      console.warn(
-        `Could not get latest rate for currency: ${currencyCode}`,
-        error,
-      );
-      return { code: currencyCode, record: null, success: false };
-    }
-  });
-
-  const settledResults = await Promise.all(promises);
-
-  for (const result of settledResults) {
-    results[result.code] = result.record;
-  }
-
-  return results;
+  return queryResult.reduce(
+    (acc, row) => {
+      acc[row.code] = { date: row.date, rate: row.rate.toString() };
+      return acc;
+    },
+    {} as Record<string, RateRecordResponse>,
+  );
 }

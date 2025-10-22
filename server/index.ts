@@ -14,7 +14,7 @@ import { log, serveStatic, setupVite } from './vite';
 
 const app = express();
 
-if (process.env.NODE_ENV === 'production') {
+if (envs.NODE_ENV === 'production') {
   app.use(
     helmet({
       contentSecurityPolicy: {

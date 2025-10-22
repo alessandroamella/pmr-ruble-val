@@ -8,6 +8,7 @@ export const envs = cleanEnv(process.env, {
     choices: ['development', 'production', 'test'],
     default: 'development',
   }),
+  DATABASE_URL: str(),
   RUN_ON_STARTUP: bool({ default: false }),
   PARALLEL_FETCHES: num({ default: 3 }),
   TAKE_SCREENSHOTS: bool({ default: false }),

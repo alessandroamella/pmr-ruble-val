@@ -7,5 +7,5 @@ vite.config.ts.*
 currency_data
 .env
 tmp
-db/*
+*.db
 
