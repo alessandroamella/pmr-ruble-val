@@ -3,6 +3,7 @@ import { createReadStream } from 'node:fs';
 import { readdir } from 'node:fs/promises';
 import path from 'node:path';
 import csv from 'csv-parser';
+import { DrizzleQueryError } from 'drizzle-orm';
 import { db } from 'server/db'; // Your centralized drizzle instance
 import { exchangeRates, type NewExchangeRate } from 'server/db/schema';
 import { CURRENCIES_CSV_DATA_DIR } from 'server/official-data/currencies-csv-data-dir';
@@ -103,18 +104,36 @@ export async function migrateCsvToDb() {
         `  ✅ Successfully migrated ${dataToInsert.length} rows for ${currencyCode}.`,
       );
     } catch (error) {
-      console.error(`  ❌ Failed to process ${fileName}:`, error);
+      console.error(`  ❌ Failed to process ${fileName}:\n  -> `);
+      if (error instanceof DrizzleQueryError) {
+        console.warn(
+          'DrizzleQueryError occurred,' +
+            '\nname:' +
+            error.name +
+            'params:' +
+            error.params +
+            '\ncause name:' +
+            error.cause?.name +
+            '\ncause cause:' +
+            error.cause?.cause,
+        );
+      } else {
+        console.error('Unexpected error:', error);
+      }
     }
   }
 
-  console.log('\n🎉 Migration complete!');
-  console.log(`Total rows processed and migrated: ${totalRowsMigrated}`);
+  if (totalRowsMigrated > 0) {
+    console.log('\n🎉 Migration complete!');
+    console.log(`Total rows processed and migrated: ${totalRowsMigrated}`);
+  } else {
+    console.log(
+      '\n⚠️  No new rows were migrated. Database may already be up to date.',
+    );
+  }
 }
 
-if (require.main === module) {
-  // If this script is run directly, execute the migration.
-  migrateCsvToDb().catch((error) => {
-    console.error('Migration failed with error:', error);
-    process.exit(1);
-  });
-}
+migrateCsvToDb().catch((error) => {
+  console.error('Migration failed with error:', error);
+  process.exit(1);
+});

@@ -11,7 +11,8 @@
     "check": "biome check && tsc",
     "check:write": "biome check --write",
     "scrape:full": "tsx server/official-data/full-scraper.ts",
-    "db:push-schema": "drizzle-kit push"
+    "db:push-schema": "drizzle-kit push",
+    "db:push-csv-data": "tsx server/scripts/migrate-to-db.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
