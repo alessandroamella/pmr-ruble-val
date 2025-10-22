@@ -10,4 +10,6 @@ export const envs = cleanEnv(process.env, {
   }),
   RUN_ON_STARTUP: bool({ default: false }),
   PARALLEL_FETCHES: num({ default: 3 }),
+  TAKE_SCREENSHOTS: bool({ default: false }),
+  CHROMIUM_PATH: str({ default: '' }),
 });

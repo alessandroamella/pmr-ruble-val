@@ -1,10 +1,20 @@
-import axios from 'axios';
-import * as cheerio from 'cheerio';
+import { existsSync } from 'node:fs';
+import { mkdir } from 'node:fs/promises';
+import { join } from 'node:path';
+import type { Browser } from 'puppeteer';
+import puppeteer from 'puppeteer-extra';
+import StealthPlugin from 'puppeteer-extra-plugin-stealth';
+import { envs } from 'server/config/envs';
+import { CURRENCIES_CSV_DATA_DIR } from 'server/official-data/currencies-csv-data-dir';
 import type {
   IExchangeRateProvider,
   NormalizedRates,
   ProviderResult,
 } from '../exchange.types';
+
+puppeteer.use(StealthPlugin());
+
+const tmpDir = join(CURRENCIES_CSV_DATA_DIR, '../tmp');
 
 export class EximBankProvider implements IExchangeRateProvider {
   readonly name = 'EximBank';
@@ -19,31 +29,61 @@ export class EximBankProvider implements IExchangeRateProvider {
    */
   async getRates(_date?: Date | string): Promise<ProviderResult> {
     const rates: NormalizedRates = {};
+    let _browser: Browser | null = null;
 
     try {
-      // 1. Fetch the HTML content
-      const { data: html } = await axios.get(this.url);
-      const $ = cheerio.load(html);
+      // 1. Launch browser and navigate to the page
+      const browser = await puppeteer.launch({
+        headless: true,
+        // if empty string, puppeteer uses the bundled Chromium
+        executablePath: envs.CHROMIUM_PATH || undefined,
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      });
+      _browser = browser;
+      const page = await browser.newPage();
+      page.setViewport({ width: 1280, height: 800 }); // standard desktop size
+      // set a 15 seconds timeout
+      await page.goto(this.url, { waitUntil: 'networkidle2', timeout: 15_000 });
 
-      // 2. Select and iterate over table rows
-      const tableRows = $('.currencies_box .currencies_table')
-        .first()
-        .find('tbody tr');
+      if (envs.TAKE_SCREENSHOTS) {
+        if (!existsSync(tmpDir)) {
+          await mkdir(tmpDir, { recursive: true });
+        }
+        await page.screenshot({
+          path: `${join(tmpDir, 'eximbank')}.png`,
+        });
+      }
 
-      tableRows.each((_index, element) => {
-        const tds = $(element).find('td');
-        const currencyCode = $(tds.eq(0)).text().trim();
-        const buyRateStr = $(tds.eq(1)).text().trim();
-        const sellRateStr = $(tds.eq(2)).text().trim();
+      // 2. Extract currency data from the table
+      const currencyData = await page.evaluate(() => {
+        const rows = document.querySelectorAll(
+          '.currencies_box .currencies_table tbody tr',
+        );
+        const data: Array<{ code: string; buy: string; sell: string }> = [];
 
-        // 3. Clean, parse, and store the data in the normalized format
-        if (currencyCode && buyRateStr && sellRateStr) {
-          rates[currencyCode] = {
-            buy: Number.parseFloat(buyRateStr),
-            sell: Number.parseFloat(sellRateStr),
+        rows.forEach((row) => {
+          const tds = row.querySelectorAll('td');
+          if (tds.length >= 3) {
+            data.push({
+              code: tds[0]?.textContent?.trim() || '',
+              buy: tds[1]?.textContent?.trim() || '',
+              sell: tds[2]?.textContent?.trim() || '',
+            });
+          }
+        });
+
+        return data;
+      });
+
+      // 3. Parse and store the data in the normalized format
+      for (const { code, buy, sell } of currencyData) {
+        if (code && buy && sell) {
+          rates[code] = {
+            buy: Number.parseFloat(buy),
+            sell: Number.parseFloat(sell),
           };
         }
-      });
+      }
 
       if (Object.keys(rates).length === 0) {
         throw new Error('Failed to parse any currency rates from the page.');
@@ -60,6 +100,11 @@ export class EximBankProvider implements IExchangeRateProvider {
     } catch (error) {
       console.error(`[${this.name}] Error fetching or parsing rates:`, error);
       throw new Error(`Failed to retrieve exchange rates from ${this.name}.`);
+    } finally {
+      // 5. Always close the browser
+      if (_browser) {
+        await _browser.close();
+      }
     }
   }
 }
