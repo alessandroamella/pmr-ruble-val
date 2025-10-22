@@ -2,6 +2,7 @@ import { URLSearchParams } from 'node:url';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { formatDate } from 'date-fns';
+import { sleep } from 'server/utils/sleep';
 
 // --- SHARED CONSTANTS AND INTERFACES ---
 
@@ -48,10 +49,6 @@ export interface RateRecord {
   units: number;
   rate: number;
 }
-
-export const sleep = (ms: number) =>
-  new Promise((resolve) => setTimeout(resolve, ms));
-
 // --- CORE SCRAPING FUNCTIONS ---
 
 export async function fetchCurrencyData(

@@ -7,7 +7,8 @@ import { format, startOfDay, subYears } from 'date-fns';
 import pLimit from 'p-limit';
 import { envs } from 'server/config/envs';
 import { CURRENCIES_CSV_DATA_DIR } from 'server/official-data/currencies-csv-data-dir';
-import { CURRENCIES, fetchCurrencyData, sleep } from './scraper-logic';
+import { sleep } from 'server/utils/sleep';
+import { CURRENCIES, fetchCurrencyData } from './scraper-logic';
 
 // Change this range to fetch historical data
 const today = startOfDay(new Date());

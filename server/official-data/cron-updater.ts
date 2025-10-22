@@ -7,7 +7,8 @@ import { addDays, format, subDays } from 'date-fns';
 import cron from 'node-cron';
 import { envs } from 'server/config/envs';
 import { CURRENCIES_CSV_DATA_DIR } from 'server/official-data/currencies-csv-data-dir';
-import { CURRENCIES, fetchCurrencyData, sleep } from './scraper-logic';
+import { sleep } from 'server/utils/sleep';
+import { CURRENCIES, fetchCurrencyData } from './scraper-logic';
 
 // const CRON_SCHEDULE = '0 */4 * * *'; // Runs at the start of every 4th hour
 

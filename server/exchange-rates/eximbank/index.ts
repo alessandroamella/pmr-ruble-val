@@ -34,7 +34,7 @@ export class EximBankProvider implements IExchangeRateProvider {
     try {
       // 1. Launch browser and navigate to the page
       const browser = await puppeteer.launch({
-        headless: true,
+        headless: envs.PUPPETEER_HEADLESS,
         // if empty string, puppeteer uses the bundled Chromium
         executablePath: envs.CHROMIUM_PATH || undefined,
         args: ['--no-sandbox', '--disable-setuid-sandbox'],
@@ -43,14 +43,24 @@ export class EximBankProvider implements IExchangeRateProvider {
       const page = await browser.newPage();
       page.setViewport({ width: 1280, height: 800 }); // standard desktop size
       // set a 15 seconds timeout
-      await page.goto(this.url, { waitUntil: 'networkidle2', timeout: 15_000 });
+      await page.goto(this.url, { waitUntil: 'networkidle2', timeout: 20_000 });
 
       if (envs.TAKE_SCREENSHOTS) {
         if (!existsSync(tmpDir)) {
           await mkdir(tmpDir, { recursive: true });
         }
         await page.screenshot({
-          path: `${join(tmpDir, 'eximbank')}.png`,
+          path: `${join(tmpDir, 'eximbank_first_load')}.png`,
+        });
+      }
+
+      // wait for the stupid auto anti bot
+      await page.waitForSelector('.currencies_box .currencies_table tbody tr', {
+        timeout: 20_000,
+      });
+      if (envs.TAKE_SCREENSHOTS) {
+        await page.screenshot({
+          path: `${join(tmpDir, 'eximbank_after_wait')}.png`,
         });
       }
 
