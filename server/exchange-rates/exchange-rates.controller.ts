@@ -69,10 +69,7 @@ router.get('/', async (req: Request, res: Response) => {
     }
   });
 
-  console.log(
-    `Fetched rates from ${successfulRates.length} providers`,
-    ...successfulRates,
-  );
+  console.log(`Fetched rates from ${successfulRates.length} providers`);
 
   res.status(200).json(successfulRates);
 });
@@ -116,6 +113,7 @@ router.get('/:providerName', async (req: Request, res: Response) => {
 
   try {
     const rates = await provider.getRates(date);
+    console.log(`Fetched rates from ${provider.name}`);
     // Store the result in cache
     cache.set(cacheKey, rates);
     res.status(200).json(rates);

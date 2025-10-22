@@ -1,9 +1,9 @@
 import { AVAILABLE_CURRENCIES } from '@shared/schema';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowRight, ArrowUpLeft, ArrowUpRight } from 'lucide-react';
+import { flatMap, uniq } from 'lodash';
+import { ArrowRight, ArrowUpLeft, ArrowUpRight, Info } from 'lucide-react';
 import { useId, useMemo, useState } from 'react';
 import type { ProviderResult } from 'server/exchange-rates/exchange.types';
-
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -45,15 +45,27 @@ export function CurrencyConverter() {
     'foreign-to-pmr' | 'pmr-to-foreign'
   >('foreign-to-pmr');
 
+  const availableCurrencies = useMemo(() => {
+    if (isLoading || !allBankRates) return [];
+    // use lodash, return AVAILABLE_CURRENCIES filtered by those present in allBankRates
+    const currenciesInData = uniq(
+      flatMap(allBankRates, (bank) => Object.keys(bank.rates)),
+    ).map((code) => code.toLowerCase());
+
+    return AVAILABLE_CURRENCIES.filter((currency) =>
+      currenciesInData.includes(currency.code),
+    );
+  }, [isLoading, allBankRates]);
+
   const inputId = useId();
 
   // 3. Memoized values
   const currencyOptions = useMemo(() => {
-    return AVAILABLE_CURRENCIES.map((currency) => ({
+    return availableCurrencies.map((currency) => ({
       value: currency.code.toUpperCase(),
       label: `${currency.code.toUpperCase()} - ${currency.name}`,
     }));
-  }, []);
+  }, [availableCurrencies]);
 
   const isForeignToPMR = direction === 'foreign-to-pmr';
 
@@ -98,6 +110,18 @@ export function CurrencyConverter() {
       };
     });
   }, [amount, selectedCurrency, allBankRates, isLoading, isForeignToPMR]);
+
+  const maxResult = useMemo(() => {
+    // lowest if foreign-to-pmr (we want to pay less foreign currency)
+    // highest if pmr-to-foreign (we want to get more foreign currency)
+    const validResults = resultsByBank
+      .map((r) => Number.parseFloat(r.result))
+      .filter((val) => !Number.isNaN(val));
+
+    if (validResults.length === 0) return null;
+
+    return Math.max(...validResults);
+  }, [resultsByBank]);
 
   // --- Render Logic ---
 
@@ -200,7 +224,7 @@ export function CurrencyConverter() {
 
         {/* --- Results List --- */}
         <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 space-y-2 mb-2 md:mb-0 items-center md:justify-items-start justify-items-center">
             <h3 className="text-lg font-medium">
               {/* PMRRubleIcon */}
               You Will Receive (
@@ -257,11 +281,25 @@ export function CurrencyConverter() {
                 >
                   {bankName}
                 </a>
-                <p className="font-mono text-lg font-semibold tracking-tight">
+                <p
+                  className={cn(
+                    'font-mono text-lg font-semibold tracking-tight',
+                    {
+                      'text-green-600':
+                        maxResult !== null &&
+                        Number.parseFloat(result) === maxResult,
+                    },
+                  )}
+                >
                   {result}
                 </p>
               </div>
             ))}
+          </div>
+          <div className="text-sm text-foreground/70 text-center mt-2">
+            <Info className="w-4 h-4 inline-block mr-1 mb-1" />
+            The <span className="text-green-600/90">best</span> rate is{' '}
+            highlighted in green.
           </div>
         </div>
       </CardContent>
