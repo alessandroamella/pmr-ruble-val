@@ -110,3 +110,11 @@ export async function migrateCsvToDb() {
   console.log('\n🎉 Migration complete!');
   console.log(`Total rows processed and migrated: ${totalRowsMigrated}`);
 }
+
+if (require.main === module) {
+  // If this script is run directly, execute the migration.
+  migrateCsvToDb().catch((error) => {
+    console.error('Migration failed with error:', error);
+    process.exit(1);
+  });
+}

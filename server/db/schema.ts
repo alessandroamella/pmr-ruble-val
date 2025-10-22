@@ -16,18 +16,13 @@ export const exchangeRates = sqliteTable(
     // The actual exchange rate
     rate: real('rate').notNull(),
   },
-  (table) => {
-    return {
-      // Composite Primary Key: Ensures one entry per currency per day.
-      pk: primaryKey({ columns: [table.currencyCode, table.date] }),
+  (table) => [
+    // Composite Primary Key: Ensures one entry per currency per day
+    primaryKey({ columns: [table.currencyCode, table.date] }),
 
-      // This index is crucial for fast lookups by currency and date range.
-      currencyDateIdx: index('currency_date_idx').on(
-        table.currencyCode,
-        table.date,
-      ),
-    };
-  },
+    // This index is crucial for fast lookups by currency and date range
+    index('currency_date_idx').on(table.currencyCode, table.date),
+  ],
 );
 
 // We can define types for convenience, Drizzle infers these automatically.
