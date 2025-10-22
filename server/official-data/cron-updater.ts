@@ -165,10 +165,11 @@ export async function updateRates() {
   );
 }
 
-// --- NEW EXPORTED FUNCTION ---
-export function startCronJob() {
-  console.log('🚀 Rate Updater Service Initialized.');
-  console.log(`🕒 Scheduling job with pattern: "${CRON_SCHEDULE}"`);
+// Schedules and starts the cron job for updating official rates
+export function startOfficialRatesCronJob() {
+  console.log(
+    `Official rates updater cron job initialized with pattern: "${CRON_SCHEDULE}"`,
+  );
 
   // Optional: Run on startup
   if (envs.RUN_ON_STARTUP) {

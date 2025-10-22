@@ -7,7 +7,8 @@ import express, {
 } from 'express';
 import helmet from 'helmet';
 import { envs } from './config/envs';
-import { startCronJob } from './official-data/cron-updater';
+import { startExchangeRatesCronJob } from './exchange-rates/exchange-rates.service';
+import { startOfficialRatesCronJob } from './official-data/cron-updater';
 import { registerRoutes } from './routes';
 import { log, serveStatic, setupVite } from './vite';
 
@@ -82,7 +83,10 @@ app.use((req, res, next) => {
 
 (async () => {
   // Start the cron job to keep currency data fresh
-  startCronJob();
+  startOfficialRatesCronJob();
+
+  // Start the exchange rates cache refresh cron job
+  startExchangeRatesCronJob();
 
   const server = await registerRoutes(app);
 
