@@ -1,8 +1,5 @@
-import { access } from 'node:fs/promises';
-import path from 'node:path';
 import type { Request, Response } from 'express';
 import { Router } from 'express';
-import { CURRENCIES_CSV_DATA_DIR } from './currencies-csv-data-dir.ts';
 import {
   cache,
   getAllLatestRates,
@@ -35,10 +32,9 @@ router.get('/latest', async (_req: Request, res: Response) => {
   }
 });
 
-// Endpoint for latest rate
+// Endpoint for latest rate for a specific currency
 router.get('/:currency/latest', async (req: Request, res: Response) => {
   const currencyCode = req.params.currency.toLowerCase();
-  const filePath = path.join(CURRENCIES_CSV_DATA_DIR, `${currencyCode}.csv`);
   const cacheKey = `latest:${currencyCode}`;
 
   const cachedData = cache.get<RateRecordResponse>(cacheKey);
@@ -47,8 +43,9 @@ router.get('/:currency/latest', async (req: Request, res: Response) => {
   }
 
   try {
-    await access(filePath);
-    const latestRecord = await getLatestRate(filePath);
+    // The service no longer needs a file path!
+    const latestRecord = await getLatestRate(currencyCode);
+
     if (latestRecord) {
       cache.set(cacheKey, latestRecord);
       return res.status(200).json(latestRecord);
@@ -56,10 +53,11 @@ router.get('/:currency/latest', async (req: Request, res: Response) => {
     return res.status(404).json({
       error: `No rate records found for currency '${currencyCode}'.`,
     });
-  } catch {
+  } catch (error) {
+    console.error(`Error fetching latest rate for ${currencyCode}:`, error);
     return res
-      .status(404)
-      .json({ error: `Data for currency '${currencyCode}' not found.` });
+      .status(500)
+      .json({ error: 'An internal server error occurred.' });
   }
 });
 

@@ -1,9 +1,6 @@
 import { join } from 'node:path';
-import { envs } from 'server/config/envs';
+import { ROOT_PATH } from 'server/paths';
 
-export const CURRENCIES_CSV_DATA_DIR = join(
-  import.meta.dirname,
-  `${envs.NODE_ENV === 'production' ? '' : '../'}../currency_data`,
-);
+export const CURRENCIES_CSV_DATA_DIR = join(ROOT_PATH, '/currency_data');
 
 console.log(`Currencies CSV data directory set to: ${CURRENCIES_CSV_DATA_DIR}`);

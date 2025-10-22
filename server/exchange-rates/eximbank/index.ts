@@ -5,7 +5,7 @@ import type { Browser } from 'puppeteer';
 import puppeteer from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { envs } from 'server/config/envs';
-import { CURRENCIES_CSV_DATA_DIR } from 'server/official-data/currencies-csv-data-dir';
+import { ROOT_PATH } from 'server/paths';
 import type {
   IExchangeRateProvider,
   NormalizedRates,
@@ -14,7 +14,7 @@ import type {
 
 puppeteer.use(StealthPlugin());
 
-const tmpDir = join(CURRENCIES_CSV_DATA_DIR, '../tmp');
+const tmpDir = join(ROOT_PATH, './tmp');
 
 export class EximBankProvider implements IExchangeRateProvider {
   readonly name = 'EximBank';
