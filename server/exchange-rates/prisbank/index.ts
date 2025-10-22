@@ -70,7 +70,7 @@ export class PrisBankProvider implements IExchangeRateProvider {
         bankName: this.name,
         date: dateString,
         rates: rates,
-        source: url.toString(),
+        bankUrl: 'https://prisbank.com',
       };
     } catch (error) {
       console.error(`[${this.name}] Error fetching or parsing rates:`, error);

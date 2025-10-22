@@ -1,4 +1,4 @@
-import clsx from 'clsx';
+import { cn } from '@/lib/utils';
 import pmrRuble from '../../../assets/ruble_symbol.svg';
 import pmrRubleWhite from '../../../assets/ruble_symbol_white.svg';
 
@@ -15,7 +15,7 @@ export function PMRRubleIcon({
       <img
         src={pmrRuble}
         alt="Transnistrian Ruble"
-        className={clsx(className, 'inline dark:hidden')}
+        className={cn(className, 'inline dark:hidden')}
         width={size}
         height={size}
         {...rest}
@@ -23,7 +23,7 @@ export function PMRRubleIcon({
       <img
         src={pmrRubleWhite}
         alt="Transnistrian Ruble White"
-        className={clsx(className, 'hidden dark:inline')}
+        className={cn(className, 'hidden dark:inline')}
         width={size}
         height={size}
         {...rest}

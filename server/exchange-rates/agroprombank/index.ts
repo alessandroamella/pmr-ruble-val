@@ -93,7 +93,7 @@ export class AgroPromBankProvider implements IExchangeRateProvider {
         bankName: this.name,
         date: normalizeDateFromApi(cashRatesSection.date),
         rates: rates,
-        source: url,
+        bankUrl: 'https://www.agroprombank.com',
       };
     } catch (error) {
       console.error(`[${this.name}] Error fetching or parsing rates:`, error);

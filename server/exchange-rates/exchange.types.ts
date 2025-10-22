@@ -23,8 +23,8 @@ export interface ProviderResult {
   date: string;
   /** The collection of normalized currency rates. */
   rates: NormalizedRates;
-  /** The original source URL or API endpoint for reference. */
-  source: string;
+  /** The official URL of the bank or provider. */
+  bankUrl: string;
 }
 
 /**

@@ -1,7 +1,10 @@
-import { AVAILABLE_CURRENCIES, type LatestRate } from '@shared/schema';
+import { AVAILABLE_CURRENCIES } from '@shared/schema';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowRightLeft } from 'lucide-react';
-import { useEffect, useId, useMemo, useState } from 'react';
+import { ArrowRight, ArrowUpLeft, ArrowUpRight } from 'lucide-react';
+import { useId, useMemo, useState } from 'react';
+import type { ProviderResult } from 'server/exchange-rates/exchange.types';
+
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -11,6 +14,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { PMRRubleIcon } from '@/components/ui/pmr-ruble-icon';
 import {
   Select,
@@ -19,92 +23,31 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
-
-// Reusable Currency Selector Component
-interface CurrencySelectorProps {
-  id: string;
-  label: string;
-  isPmr: boolean;
-  selectedCurrency: string;
-  onCurrencyChange: (value: string) => void;
-  currencyOptions: Array<{ value: string; label: string }>;
-}
-
-const CurrencySelector = ({
-  id,
-  label,
-  isPmr,
-  selectedCurrency,
-  onCurrencyChange,
-  currencyOptions,
-}: CurrencySelectorProps) => {
-  return (
-    <div className="w-full">
-      <label
-        htmlFor={id}
-        className="text-sm font-medium text-muted-foreground pb-2 block"
-      >
-        {label}
-      </label>
-      {isPmr ? (
-        <div className="h-9 px-3 py-2 rounded-md border border-input bg-muted/20 flex items-center justify-between font-medium">
-          <Tooltip>
-            <TooltipTrigger>
-              <span className="flex items-center gap-2">
-                <PMRRubleIcon className="w-4 h-4" />
-                PMR{' '}
-                <span className="hidden lg:inline-block">
-                  - Transnistrian Ruble
-                </span>
-              </span>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>
-                Use the{' '}
-                <ArrowRightLeft className="h-4 w-4 inline-block mr-1 mb-1" />
-                button to swap the conversion direction.
-              </p>
-            </TooltipContent>
-          </Tooltip>
-        </div>
-      ) : (
-        <Select value={selectedCurrency} onValueChange={onCurrencyChange}>
-          <SelectTrigger id={id} data-testid="select-currency">
-            <SelectValue placeholder="Select currency" />
-          </SelectTrigger>
-          <SelectContent>
-            {currencyOptions.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      )}
-    </div>
-  );
-};
+import { cn } from '@/lib/utils';
 
 export function CurrencyConverter() {
-  // 1. Data Fetching - Fetch all latest rates in a single request
+  // 1. Data Fetching
   const {
-    data: allRates,
+    data: allBankRates,
     isLoading,
     isError,
-  } = useQuery<Record<string, LatestRate | null>>({
-    queryKey: ['/api/official-rates/latest'],
-    staleTime: 1000 * 60 * 5, // Cache rates for 5 minutes
+  } = useQuery<ProviderResult[]>({
+    queryKey: ['/api/exchange-rates'],
+    staleTime: 1000 * 60 * 15, // Cache for 15 minutes
   });
 
   // 2. State Management
-  const [amount, setAmount] = useState('20');
+  const [amount, setAmount] = useState('100');
   const [selectedCurrency, setSelectedCurrency] = useState('EUR');
-  const [isPmrToForeign, setIsPmrToForeign] = useState(false); // true: PMR → Foreign, false: Foreign → PMR
-  const [result, setResult] = useState<string>('');
+  const [direction, setDirection] = useState<
+    'foreign-to-pmr' | 'pmr-to-foreign'
+  >('foreign-to-pmr');
 
-  // 3. Memoize currency options for the dropdown (excluding PMR)
+  const inputId = useId();
+
+  // 3. Memoized values
   const currencyOptions = useMemo(() => {
     return AVAILABLE_CURRENCIES.map((currency) => ({
       value: currency.code.toUpperCase(),
@@ -112,76 +55,63 @@ export function CurrencyConverter() {
     }));
   }, []);
 
+  const isForeignToPMR = direction === 'foreign-to-pmr';
+
   // 4. Conversion Logic
-  useEffect(() => {
-    if (isLoading || !amount || !allRates) {
-      setResult('');
-      return;
+  const resultsByBank = useMemo(() => {
+    if (isLoading || !allBankRates || allBankRates.length === 0) {
+      return [];
     }
-
     const numericAmount = Number.parseFloat(amount);
-    if (Number.isNaN(numericAmount)) {
-      setResult('');
-      return;
+
+    if (Number.isNaN(numericAmount) || numericAmount <= 0) {
+      return allBankRates.map((b) => ({
+        bankName: b.bankName,
+        bankUrl: b.bankUrl,
+        result: '0.0000',
+      }));
     }
 
-    let finalResult = 0;
-
-    const rateData = allRates[selectedCurrency.toLowerCase()];
-    if (rateData) {
-      const ratePerOne = Number.parseFloat(rateData.rate);
-
-      if (isPmrToForeign) {
-        // PMR → Foreign: divide by rate
-        finalResult = numericAmount / ratePerOne;
-      } else {
-        // Foreign → PMR: multiply by rate
-        finalResult = numericAmount * ratePerOne;
+    return allBankRates.map((bank) => {
+      const rateData = bank.rates[selectedCurrency];
+      if (!rateData) {
+        return {
+          bankName: bank.bankName,
+          bankUrl: bank.bankUrl,
+          result: 'N/A',
+        };
       }
-    }
 
-    setResult(finalResult > 0 ? finalResult.toFixed(4) : '');
-  }, [amount, selectedCurrency, isPmrToForeign, allRates, isLoading]);
+      let finalResult = 0;
+      if (isForeignToPMR) {
+        // User has foreign currency, wants PMR. Bank BUYS foreign currency.
+        finalResult = numericAmount * rateData.buy;
+      } else {
+        // User has PMR, wants foreign currency. Bank SELLS foreign currency.
+        finalResult = numericAmount / rateData.sell;
+      }
 
-  // 5. Swap Handler
-  const handleSwap = () => {
-    setIsPmrToForeign(!isPmrToForeign);
-  };
-
-  const amountId = useId();
-  const fromId = useId();
-  const toId = useId();
+      return {
+        bankName: bank.bankName,
+        bankUrl: bank.bankUrl,
+        result: finalResult > 0 ? finalResult.toFixed(4) : '0.0000',
+      };
+    });
+  }, [amount, selectedCurrency, allBankRates, isLoading, isForeignToPMR]);
 
   // --- Render Logic ---
 
   if (isLoading) {
-    return (
-      <Card className="border-card-border">
-        <CardHeader>
-          <Skeleton className="h-7 w-48" />
-          <Skeleton className="h-4 w-64 mt-2" />
-        </CardHeader>
-        <CardContent className="space-y-4 pt-2">
-          <div className="flex flex-col sm:flex-row items-center gap-2">
-            <Skeleton className="h-10 w-full sm:flex-1" />
-            <Skeleton className="h-10 w-full sm:flex-1" />
-            <Skeleton className="h-10 w-10 shrink-0" />
-            <Skeleton className="h-10 w-full sm:flex-1" />
-          </div>
-          <Skeleton className="h-12 w-1/2" />
-        </CardContent>
-      </Card>
-    );
+    return <CurrencyConverterSkeleton />;
   }
 
   if (isError) {
     return (
       <Card className="border-destructive/50 bg-destructive/10">
         <CardHeader>
-          <CardTitle>Currency Converter Unavailable</CardTitle>
+          <CardTitle>Converter Unavailable</CardTitle>
           <CardDescription>
-            Could not load the required exchange rate data. Please try again
-            later.
+            Could not load commercial exchange rate data.
           </CardDescription>
         </CardHeader>
       </Card>
@@ -191,92 +121,195 @@ export function CurrencyConverter() {
   return (
     <Card className="border-card-border hover:bg-card/90 transition-colors">
       <CardHeader>
-        <CardTitle className="text-2xl font-semibold flex items-center gap-2">
-          Converter
-        </CardTitle>
+        <CardTitle className="text-2xl font-semibold">Converter</CardTitle>
         <CardDescription>
-          Convert between PMR Rubles and other currencies using the most recent
-          exchange rates.
+          Convert between PMR Rubles (PRB) and other currencies using the most
+          recent exchange rates across commercial banks.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto_1fr] items-end gap-2">
-          {/* Amount Input */}
-          <div className="w-full">
-            <label
-              htmlFor={amountId}
-              className="text-sm font-medium text-muted-foreground pb-2 block"
+      <CardContent className="space-y-6">
+        {/* --- Main Conversion UI (Static Layout) --- */}
+        <div className="flex flex-col items-center gap-4">
+          <div className="flex flex-col md:flex-row w-full items-center md:items-end lg:gap-x-6 gap-4 justify-center max-w-sm md:justify-between">
+            {/* Left side is Foreign Currency */}
+            <div className="flex flex-col items-center gap-2 text-center">
+              <Label className="text-base font-medium">Foreign Currency</Label>
+              <Select
+                value={selectedCurrency}
+                onValueChange={setSelectedCurrency}
+              >
+                <SelectTrigger
+                  className="w-[140px]"
+                  data-testid="select-currency"
+                >
+                  <SelectValue placeholder="Currency" />
+                </SelectTrigger>
+                <SelectContent>
+                  {currencyOptions.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.value}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button
+              variant="outline"
+              size="icon"
+              className="shrink-0 scale-125"
+              onClick={() =>
+                setDirection(
+                  isForeignToPMR ? 'pmr-to-foreign' : 'foreign-to-pmr',
+                )
+              }
+              aria-label="Swap conversion direction"
             >
-              Amount
-            </label>
+              <ArrowRight
+                className={cn(
+                  'h-5 w-5 transition-transform rotate-90 md:rotate-0 duration-300',
+                  !isForeignToPMR && '-rotate-90 md:rotate-180',
+                )}
+              />
+            </Button>
+
+            {/* Right side is PMR Ruble */}
+            <div className="flex flex-col items-center gap-2 text-center">
+              <div className="flex h-10 items-center gap-2 rounded-md border border-input bg-background px-3 py-2">
+                <span className="text-sm font-medium">PMR Ruble</span>
+                <PMRRubleIcon className="h-5 w-5 inline" />
+              </div>
+            </div>
+          </div>
+
+          <div className="w-full max-w-sm space-y-2 pt-2">
+            <Label htmlFor={inputId}>Amount to Convert</Label>
             <Input
-              id={amountId}
+              id={inputId}
               type="number"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="100.00"
               min="0"
+              className="text-center text-xl h-12"
             />
           </div>
-
-          {/* From Currency */}
-          <CurrencySelector
-            id={fromId}
-            label="From"
-            isPmr={isPmrToForeign}
-            selectedCurrency={selectedCurrency}
-            onCurrencyChange={setSelectedCurrency}
-            currencyOptions={currencyOptions}
-          />
-
-          {/* Swap Button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleSwap}
-            className="hidden md:flex mx-1 shrink-0 scale-125"
-            aria-label="Swap currencies"
-          >
-            <ArrowRightLeft className="h-4 w-4" />
-          </Button>
-
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={handleSwap}
-            className="flex md:hidden mx-auto scale-125 mt-3 -mb-2 justify-center items-center"
-            aria-label="Swap currencies"
-          >
-            <ArrowRightLeft className="h-4 w-4 inline-block" />
-            Swap
-          </Button>
-
-          {/* To Currency */}
-          <CurrencySelector
-            id={toId}
-            label="To"
-            isPmr={!isPmrToForeign}
-            selectedCurrency={selectedCurrency}
-            onCurrencyChange={setSelectedCurrency}
-            currencyOptions={currencyOptions}
-          />
         </div>
 
-        {/* Result Display */}
-        {result && amount && (
-          <div className="pt-4 text-center sm:text-left">
-            <p className="text-muted-foreground">
-              {amount} {isPmrToForeign ? 'PMR' : selectedCurrency} equals
-            </p>
-            <p className="text-4xl font-bold font-mono tracking-tight flex items-center justify-center sm:justify-start gap-2">
-              {result}
-              <span className="text-3xl font-sans font-medium text-muted-foreground">
-                {isPmrToForeign ? selectedCurrency : 'PMR'}
+        <Separator />
+
+        {/* --- Results List --- */}
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3">
+            <h3 className="text-lg font-medium">
+              {/* PMRRubleIcon */}
+              You Will Receive (
+              {isForeignToPMR ? <span>PRB</span> : selectedCurrency})
+            </h3>
+            {isForeignToPMR ? (
+              <Badge className="w-fit md:mx-auto bg-green-600/20 text-green-800 dark:text-green-300 hover:bg-green-600/30 border-green-600/30">
+                You Sell {selectedCurrency}
+              </Badge>
+            ) : (
+              <Badge className="w-fit md:mx-auto bg-red-600/20 text-red-800 dark:text-red-300 hover:bg-red-600/30 border-red-600/30">
+                You Buy {selectedCurrency}
+              </Badge>
+            )}
+            <div className="hidden md:flex md:ml-auto text-lg font-medium items-center gap-2">
+              <span
+                className={cn({
+                  'text-muted-foreground': isForeignToPMR,
+                })}
+              >
+                {selectedCurrency}
               </span>
-              {!isPmrToForeign && <PMRRubleIcon className="w-7 h-7" />}
-            </p>
+              <ArrowUpRight
+                className={cn('w-4 h-4', {
+                  hidden: !isForeignToPMR,
+                })}
+              />
+              <ArrowUpLeft
+                className={cn('w-4 h-4', {
+                  hidden: isForeignToPMR,
+                })}
+              />
+              <span
+                className={cn({
+                  'text-muted-foreground': !isForeignToPMR,
+                })}
+              >
+                <PMRRubleIcon className="inline-block mb-1" /> PRB
+              </span>
+            </div>
           </div>
-        )}
+
+          <div className="space-y-3">
+            {resultsByBank.map(({ bankName, bankUrl, result }) => (
+              <div
+                key={bankName}
+                className="flex items-center justify-between rounded-md bg-muted/50 p-3"
+              >
+                <a
+                  href={bankUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium hover:text-primary/80 transition-colors"
+                >
+                  {bankName}
+                </a>
+                <p className="font-mono text-lg font-semibold tracking-tight">
+                  {result}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// A dedicated skeleton component for the static layout
+function CurrencyConverterSkeleton() {
+  return (
+    <Card className="border-card-border">
+      <CardHeader>
+        <Skeleton className="h-7 w-48" />
+        <Skeleton className="h-4 w-64 mt-2" />
+      </CardHeader>
+      <CardContent className="space-y-6 pt-2">
+        <div className="flex flex-col items-center gap-4">
+          <div className="grid w-full grid-cols-[1fr_auto_1fr] items-end gap-4">
+            {/* Left Skeleton */}
+            <div className="flex flex-col items-center gap-2">
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="h-10 w-36" />
+            </div>
+            {/* Arrow Skeleton */}
+            <Skeleton className="h-10 w-10 rounded-md" />
+            {/* Right Skeleton */}
+            <div className="flex flex-col items-center gap-2">
+              <Skeleton className="h-5 w-24" />
+              <Skeleton className="h-10 w-28" />
+            </div>
+          </div>
+          <div className="w-full max-w-sm space-y-2 pt-2">
+            <Skeleton className="h-5 w-36" />
+            <Skeleton className="h-12 w-full" />
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* Skeleton for the results list */}
+        <div className="space-y-4">
+          <Skeleton className="h-6 w-52" />
+          <div className="space-y-3">
+            <Skeleton className="h-14 w-full" />
+            <Skeleton className="h-14 w-full" />
+            <Skeleton className="h-14 w-full" />
+          </div>
+        </div>
       </CardContent>
     </Card>
   );

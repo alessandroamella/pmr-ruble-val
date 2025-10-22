@@ -55,7 +55,7 @@ export class EximBankProvider implements IExchangeRateProvider {
         // Since the site doesn't specify a date, we use today's date.
         date: new Date().toISOString().split('T')[0],
         rates: rates,
-        source: this.url,
+        bankUrl: 'https://bankexim.com/',
       };
     } catch (error) {
       console.error(`[${this.name}] Error fetching or parsing rates:`, error);

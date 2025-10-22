@@ -1,4 +1,5 @@
-import fs from 'node:fs';
+import { existsSync } from 'node:fs';
+import { readFile } from 'node:fs/promises';
 import type { Server } from 'node:http';
 import path from 'node:path';
 import express, { type Express } from 'express';
@@ -53,7 +54,7 @@ export async function setupVite(app: Express, server: Server) {
       );
 
       // always reload the index.html file from disk incase it changes
-      let template = await fs.promises.readFile(clientTemplate, 'utf-8');
+      let template = await readFile(clientTemplate, 'utf-8');
       template = template.replace(
         `src="/src/main.tsx"`,
         `src="/src/main.tsx?v=${nanoid()}"`,
@@ -68,9 +69,9 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export function serveStatic(app: Express) {
-  const distPath = path.resolve(import.meta.dirname, '../client/public');
+  const distPath = path.resolve(import.meta.dirname, '../public');
 
-  if (!fs.existsSync(distPath)) {
+  if (!existsSync(distPath)) {
     throw new Error(
       `Could not find the build directory: ${distPath}, make sure to build the client first`,
     );

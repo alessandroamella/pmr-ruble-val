@@ -3,11 +3,12 @@ import { useQuery } from '@tanstack/react-query';
 import { auto as followSystemColorScheme } from 'darkreader';
 import { format } from 'date-fns';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowUpRight, Info, TrendingUp } from 'lucide-react';
+import { ArrowUpRight, Building, Info, TrendingUp } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { FaEnvelope, FaGithub } from 'react-icons/fa';
 import Obfuscate from 'react-obfuscate';
 import { ApiStatusBanner } from '@/components/api-status-banner';
+import { BankRatesGrid } from '@/components/bank-rates-grid';
 import { CurrencyConverter } from '@/components/currency-converter';
 import { HistoricalChart } from '@/components/historical-chart';
 import { RatesTable } from '@/components/rates-table';
@@ -20,42 +21,12 @@ import {
 } from '@/components/ui/card';
 import { PMRRubleIcon } from '@/components/ui/pmr-ruble-icon';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  containerVariants,
+  contentVariants,
+  itemVariants,
+} from '@/constants/framer-motion-variants';
 import flagImg from '../../assets/flag.svg';
-
-// --- Framer Motion Variants ---
-
-// For staggering the main content blocks on page load
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-};
-
-// For each individual content block
-const itemVariants = {
-  hidden: { y: 20, opacity: 0 },
-  visible: {
-    y: 0,
-    opacity: 1,
-    transition: {
-      type: 'spring',
-      stiffness: 100,
-      damping: 12,
-    },
-  },
-};
-
-// For animating content inside cards (e.g., from skeleton to data)
-const contentVariants = {
-  initial: { opacity: 0, y: 10 },
-  animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -10 },
-  transition: { duration: 0.3 },
-};
 
 const contactEmail = import.meta.env.VITE_CONTACT_EMAIL;
 if (!contactEmail) {
@@ -123,7 +94,8 @@ export default function Home() {
             <p className="text-base text-muted-foreground">
               Data for {format(today, 'MMMM d, yyyy')} • Live
               Pridnestrovian/Transnistrian Ruble (
-              <PMRRubleIcon /> / руб/р) exchange rates and historical trends.
+              <PMRRubleIcon /> / руб/р / PRB) exchange rates and historical
+              trends.
             </p>
             <p className="text-xs text-muted-foreground">
               Data from{' '}
@@ -167,7 +139,7 @@ export default function Home() {
                 <CardTitle className="text-lg font-medium flex items-center gap-2">
                   <span>EUR</span>
                   <ArrowUpRight className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">PMR</span>
+                  <span className="text-muted-foreground">PRB</span>
                 </CardTitle>
                 <CardDescription>Euro to Transnistrian Ruble</CardDescription>
               </CardHeader>
@@ -215,7 +187,7 @@ export default function Home() {
                 <CardTitle className="text-lg font-medium flex items-center gap-2">
                   <span>USD</span>
                   <ArrowUpRight className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">PMR</span>
+                  <span className="text-muted-foreground">PRB</span>
                 </CardTitle>
                 <CardDescription>
                   US Dollar to Transnistrian Ruble
@@ -261,15 +233,35 @@ export default function Home() {
           <CurrencyConverter />
         </motion.div>
 
-        {/* Full Data Table */}
+        {/* Bank Rates Grid */}
+        <motion.div variants={itemVariants}>
+          <Card className="border-card-border hover:bg-card/90 transition-colors">
+            <CardHeader>
+              <CardTitle className="text-2xl font-semibold flex items-center gap-2 pb-0">
+                <Building className="w-6 h-6" />
+                Commercial Bank Rates
+              </CardTitle>
+              <CardDescription>
+                Buy and sell rates from various banks in Pridnestrovie. These
+                rates are used for actual currency exchange.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-0 md:p-6 md:pt-0">
+              <BankRatesGrid />
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Full Data Table (Official) */}
         <motion.div variants={itemVariants}>
           <Card className="border-card-border hover:bg-card/90 transition-colors">
             <CardHeader>
               <CardTitle className="text-2xl font-semibold">
-                Exchange Rates
+                Official Exchange Rates
               </CardTitle>
               <CardDescription>
-                Overview of all published currencies.
+                Overview of all official currencies published by the Central
+                Bank.
               </CardDescription>
             </CardHeader>
             <CardContent className="p-0 md:p-6">
@@ -297,26 +289,36 @@ export default function Home() {
           </Card>
         </motion.div>
 
-        {/* USD Peg Information */}
+        {/* Info Section */}
         <motion.div variants={itemVariants}>
           <Card className="border-card-border hover:bg-muted/40 transition-colors bg-muted/50">
             <CardHeader>
-              <CardTitle className="text-2xl font-semibold flex items-center gap-2">
-                <Info className="w-6 h-6" />
+              <CardTitle className="text-2xl font-semibold">
+                <Info className="w-6 h-6 inline-block mr-2 mb-1" />
                 About the Transnistrian Ruble
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm -mt-2 text-muted-foreground leading-relaxed">
-                The Transnistrian Ruble is de facto pegged to the US Dollar. The
-                central bank evaluates daily whether adjustments to the exchange
-                rate are necessary.
-              </p>
-              <p className="text-sm text-muted-foreground leading-relaxed mt-2">
-                This website uses the term "Transnistrian Ruble" for clarity and
-                recognizability, but the official name is "
-                <strong>Pridnestrovian Ruble</strong>".
-              </p>
+              <ul className="text-sm -mt-3 text-muted-foreground leading-relaxed list-disc list-inside space-y-2">
+                <li>
+                  The Transnistrian Ruble is de facto pegged to the US Dollar.
+                  The central bank evaluates daily whether adjustments to the
+                  exchange rate are necessary.
+                </li>
+                <li>
+                  This website uses the term "Transnistrian Ruble" for clarity
+                  and recognizability, but the official name is "
+                  <strong>Pridnestrovian Ruble</strong>".
+                </li>
+                <li>
+                  Due to Pridnestrovie being a state with limited recognition,
+                  its currency has no ISO 4217 code. However, some
+                  Pridnestrovian organizations such as Agroprombank and
+                  Gazprombank use <strong>PRB</strong> as the ISO 4217 code.
+                  This website adopts the PRB code for consistency with these
+                  institutions.
+                </li>
+              </ul>
             </CardContent>
           </Card>
         </motion.div>
@@ -325,8 +327,13 @@ export default function Home() {
       {/* Footer */}
       <footer className="border-t mt-16">
         <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6">
-          <p className="text-sm text-muted-foreground text-center">
-            Transnistrian Ruble Exchange Rates • Data updated daily
+          <p className="text-sm text-muted-foreground text-center flex flex-col md:flex-row justify-center mb-2 items-center space-y-2">
+            <img
+              src={flagImg}
+              alt="Transnistria Flag"
+              className="w-10 md:w-8 h-auto md:mr-2 md:mt-2 inline-block"
+            />
+            <span>Transnistrian Ruble Exchange Rates • Data updated daily</span>
           </p>
           <p className="text-xs text-muted-foreground text-center mt-1">
             A small project by{' '}

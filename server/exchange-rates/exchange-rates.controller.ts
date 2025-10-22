@@ -69,6 +69,11 @@ router.get('/', async (req: Request, res: Response) => {
     }
   });
 
+  console.log(
+    `Fetched rates from ${successfulRates.length} providers`,
+    ...successfulRates,
+  );
+
   res.status(200).json(successfulRates);
 });
 
