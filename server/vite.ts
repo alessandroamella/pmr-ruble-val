@@ -54,7 +54,6 @@ export async function setupVite(app: Express, server: Server) {
     }
   });
 }
-
 export function serveStatic(app: Express) {
   const __dirname =
     import.meta.dirname || path.dirname(fileURLToPath(import.meta.url));
@@ -74,18 +73,22 @@ export function serveStatic(app: Express) {
     express.static(clientPath, {
       maxAge: '1y',
       immutable: true,
-      index: false, // Don't auto-serve index.html
+      index: false,
     }),
   );
 
-  // SPA fallback - serve index.html for all non-file requests
-  app.get('*', (req, res) => {
-    // If URL has extension and we got here, file doesn't exist
+  // SPA fallback - serve index.html ONLY for routes without extensions
+  app.get('*', (req, res, next) => {
+    // If URL has extension, it's a file request that wasn't found
     if (/\.\w+$/.test(req.path)) {
       return res.status(404).send('Not Found');
     }
 
-    // Serve React app for all routes
-    res.sendFile(path.join(clientPath, 'index.html'));
+    // No extension = it's a client-side route, serve React app
+    res.sendFile(path.join(clientPath, 'index.html'), (err) => {
+      if (err) {
+        next(err);
+      }
+    });
   });
 }
