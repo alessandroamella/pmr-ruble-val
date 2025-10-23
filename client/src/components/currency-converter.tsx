@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { flatMap, uniq } from 'lodash';
 import { ArrowRight, ArrowUpLeft, ArrowUpRight, Info } from 'lucide-react';
 import { useId, useMemo, useState } from 'react';
+import ReactGA from 'react-ga4';
 import type { ProviderResult } from 'server/exchange-rates/exchange.types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -44,6 +45,35 @@ export function CurrencyConverter() {
   const [direction, setDirection] = useState<
     'foreign-to-pmr' | 'pmr-to-foreign'
   >('foreign-to-pmr');
+
+  const handleCurrencyChange = (newCurrency: string) => {
+    setSelectedCurrency(newCurrency);
+    ReactGA.event('select_currency_converter', {
+      currency_code: newCurrency,
+    });
+  };
+
+  const handleSwapDirection = () => {
+    const newDirection = isForeignToPMR ? 'pmr-to-foreign' : 'foreign-to-pmr';
+    setDirection(newDirection);
+
+    ReactGA.event('swap_conversion_direction', {
+      from_currency:
+        newDirection === 'foreign-to-pmr' ? selectedCurrency : 'PRB',
+      to_currency: newDirection === 'foreign-to-pmr' ? 'PRB' : selectedCurrency,
+    });
+  };
+
+  const handleAmountBlur = () => {
+    const numericAmount = Number.parseFloat(amount);
+    if (!Number.isNaN(numericAmount) && numericAmount > 0) {
+      ReactGA.event('convert_currency', {
+        amount: numericAmount,
+        from_currency: isForeignToPMR ? selectedCurrency : 'PRB',
+        to_currency: isForeignToPMR ? 'PRB' : selectedCurrency,
+      });
+    }
+  };
 
   const availableCurrencies = useMemo(() => {
     if (isLoading || !allBankRates) return [];
@@ -160,7 +190,7 @@ export function CurrencyConverter() {
               <Label className="text-base font-medium">Foreign Currency</Label>
               <Select
                 value={selectedCurrency}
-                onValueChange={setSelectedCurrency}
+                onValueChange={handleCurrencyChange}
               >
                 <SelectTrigger
                   className="w-[140px]"
@@ -182,11 +212,7 @@ export function CurrencyConverter() {
               variant="outline"
               size="icon"
               className="shrink-0 scale-125"
-              onClick={() =>
-                setDirection(
-                  isForeignToPMR ? 'pmr-to-foreign' : 'foreign-to-pmr',
-                )
-              }
+              onClick={handleSwapDirection}
               aria-label="Swap conversion direction"
             >
               <ArrowRight
@@ -213,6 +239,7 @@ export function CurrencyConverter() {
               type="number"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
+              onBlur={handleAmountBlur}
               placeholder="100.00"
               min="0"
               className="text-center text-xl h-12"
@@ -278,6 +305,12 @@ export function CurrencyConverter() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="font-medium hover:text-primary/80 transition-colors"
+                  onClick={() =>
+                    ReactGA.event('click_outbound_link', {
+                      link_url: bankUrl,
+                      link_text: bankName,
+                    })
+                  }
                 >
                   {bankName}
                 </a>

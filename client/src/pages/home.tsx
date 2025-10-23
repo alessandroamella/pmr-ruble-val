@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowUpRight, Building, Info, TrendingUp } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import ReactGA from 'react-ga4';
 import { FaEnvelope, FaGithub } from 'react-icons/fa';
 import Obfuscate from 'react-obfuscate';
 import { ApiStatusBanner } from '@/components/api-status-banner';
@@ -363,6 +364,12 @@ export default function Home() {
               target="_blank"
               rel="noopener noreferrer"
               className="underline hover:text-foreground transition-colors"
+              onClick={() =>
+                ReactGA.event('click_outbound_link', {
+                  link_url: 'https://github.com/alessandroamella/pmr-ruble-val',
+                  link_text: 'View on GitHub',
+                })
+              }
             >
               View on GitHub
             </a>

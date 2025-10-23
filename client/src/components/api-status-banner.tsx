@@ -1,4 +1,6 @@
 import { AlertCircle, Loader2 } from 'lucide-react';
+import { useEffect } from 'react';
+import ReactGA from 'react-ga4';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface ApiStatusBannerProps {
@@ -7,6 +9,15 @@ interface ApiStatusBannerProps {
 }
 
 export function ApiStatusBanner({ isError, isLoading }: ApiStatusBannerProps) {
+  useEffect(() => {
+    if (isError) {
+      // This is a general name for this banner
+      ReactGA.event('api_error', {
+        api_endpoint: 'official-rates',
+      });
+    }
+  }, [isError]);
+
   if (isLoading) {
     return (
       <Alert

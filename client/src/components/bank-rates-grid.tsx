@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { flatMap, uniq } from 'lodash';
 import { Building, Info, MinusCircle } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import ReactGA from 'react-ga4';
 import type { ProviderResult } from 'server/exchange-rates/exchange.types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -178,6 +179,7 @@ export const BankRatesGrid = () => {
   }
 
   const toggleCurrency = (code: CurrencyCode) => {
+    const isSelected = selectedCurrencies.includes(code);
     setSelectedCurrencies((prev) => {
       if (prev.includes(code)) {
         // Don't allow deselecting all currencies
@@ -185,6 +187,14 @@ export const BankRatesGrid = () => {
         return prev.filter((c) => c !== code);
       }
       return [...prev, code].sort();
+    });
+
+    // Don't track if they try to deselect the last item
+    if (isSelected && selectedCurrencies.length === 1) return;
+
+    ReactGA.event('toggle_grid_currency', {
+      currency_code: code,
+      action: isSelected ? 'deselect' : 'select',
     });
   };
 

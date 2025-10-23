@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { format, isAfter, isBefore, subYears } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import ReactGA from 'react-ga4';
 import {
   CartesianGrid,
   Legend,
@@ -44,6 +45,26 @@ export function HistoricalChart() {
   ]);
 
   const formatDate = (date: Date) => format(date, 'yyyy-MM-dd');
+
+  const handleStartDateChange = (date: Date | null) => {
+    if (date) {
+      setStartDate(date);
+      ReactGA.event('change_chart_date_range', {
+        start_date: formatDate(date),
+        end_date: formatDate(endDate),
+      });
+    }
+  };
+
+  const handleEndDateChange = (date: Date | null) => {
+    if (date) {
+      setEndDate(date);
+      ReactGA.event('change_chart_date_range', {
+        start_date: formatDate(startDate),
+        end_date: formatDate(date),
+      });
+    }
+  };
 
   // Fetch historical data
   const { data, isLoading, error } = useQuery<RatesResponse>({
@@ -100,6 +121,7 @@ export function HistoricalChart() {
   }, [data, selectedCurrencies]);
 
   const toggleCurrency = (code: CurrencyCode) => {
+    const isSelected = selectedCurrencies.includes(code);
     setSelectedCurrencies((prev) => {
       if (prev.includes(code)) {
         // Don't allow deselecting all currencies
@@ -107,6 +129,14 @@ export function HistoricalChart() {
         return prev.filter((c) => c !== code);
       }
       return [...prev, code];
+    });
+
+    // Don't track if they try to deselect the last item
+    if (isSelected && selectedCurrencies.length === 1) return;
+
+    ReactGA.event('toggle_chart_currency', {
+      currency_code: code,
+      action: isSelected ? 'deselect' : 'select',
     });
   };
 
@@ -134,7 +164,7 @@ export function HistoricalChart() {
             <PopoverContent className="w-auto p-0" align="start">
               <Calendar
                 selected={startDate}
-                onSelect={(date) => date && setStartDate(date)}
+                onSelect={(date) => handleStartDateChange(date)}
                 disabled={(date) => isBefore(date, endDate)}
               />
             </PopoverContent>
@@ -161,7 +191,7 @@ export function HistoricalChart() {
             <PopoverContent className="w-auto p-0" align="start">
               <Calendar
                 selected={endDate}
-                onSelect={(date) => date && setEndDate(date)}
+                onSelect={(date) => handleEndDateChange(date)}
                 disabled={(date) => isAfter(date, startDate)}
               />
             </PopoverContent>
