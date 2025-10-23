@@ -1,6 +1,9 @@
 {
+  "$schema": "https://www.schemastore.org/web-manifest-combined.json",
   "name": "PMR Ruble Value",
   "short_name": "PMR Ruble",
+  "categories": ["finance", "utilities", "productivity"],
+  "description": "An application that provides up-to-date exchange rates and historical data for the Transnistrian Ruble (PMR) against major currencies like USD and EUR.",
   "icons": [
     {
       "src": "/web-app-manifest-192x192.png",
