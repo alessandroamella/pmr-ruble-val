@@ -2,8 +2,8 @@ import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import type { Server } from 'node:http';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import express, { type Express } from 'express';
-import { nanoid } from 'nanoid';
 import { createLogger, createServer as createViteServer } from 'vite';
 import viteConfig from '../vite.config';
 
@@ -21,12 +21,6 @@ export function log(message: string, source = 'express') {
 }
 
 export async function setupVite(app: Express, server: Server) {
-  const serverOptions = {
-    middlewareMode: true,
-    hmr: { server },
-    allowedHosts: true as const,
-  };
-
   const vite = await createViteServer({
     ...viteConfig,
     configFile: false,
@@ -37,29 +31,22 @@ export async function setupVite(app: Express, server: Server) {
         process.exit(1);
       },
     },
-    server: serverOptions,
+    server: {
+      middlewareMode: true,
+      hmr: { server },
+    },
     appType: 'custom',
   });
 
   app.use(vite.middlewares);
+
   app.use('*', async (req, res, next) => {
-    const url = req.originalUrl;
-
     try {
-      const clientTemplate = path.resolve(
-        import.meta.dirname,
-        '..',
-        'client',
-        'index.html',
+      const template = await readFile(
+        path.resolve(viteConfig.root as string, 'index.html'),
+        'utf-8',
       );
-
-      // always reload the index.html file from disk incase it changes
-      let template = await readFile(clientTemplate, 'utf-8');
-      template = template.replace(
-        `src="/src/main.tsx"`,
-        `src="/src/main.tsx?v=${nanoid()}"`,
-      );
-      const page = await vite.transformIndexHtml(url, template);
+      const page = await vite.transformIndexHtml(req.originalUrl, template);
       res.status(200).set({ 'Content-Type': 'text/html' }).end(page);
     } catch (e) {
       vite.ssrFixStacktrace(e as Error);
@@ -69,19 +56,36 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export function serveStatic(app: Express) {
-  const distPath = path.resolve(import.meta.dirname, '../public');
+  const __dirname =
+    import.meta.dirname || path.dirname(fileURLToPath(import.meta.url));
 
-  if (!existsSync(distPath)) {
+  const clientPath = path.resolve(__dirname, 'client');
+
+  if (!existsSync(clientPath)) {
     throw new Error(
-      `Could not find the build directory: ${distPath}, make sure to build the client first`,
+      `Build directory not found: ${clientPath}\nRun: npm run build`,
     );
   }
 
-  console.log(`Serving static files from: ${distPath}`);
-  app.use(express.static(distPath));
+  log(`Serving static files from: ${clientPath}`);
 
-  // fall through to index.html if the file doesn't exist
-  app.use('*', (_req, res) => {
-    res.sendFile(path.resolve(distPath, 'index.html'));
+  // Serve static files with caching
+  app.use(
+    express.static(clientPath, {
+      maxAge: '1y',
+      immutable: true,
+      index: false, // Don't auto-serve index.html
+    }),
+  );
+
+  // SPA fallback - serve index.html for all non-file requests
+  app.get('*', (req, res) => {
+    // If URL has extension and we got here, file doesn't exist
+    if (/\.\w+$/.test(req.path)) {
+      return res.status(404).send('Not Found');
+    }
+
+    // Serve React app for all routes
+    res.sendFile(path.join(clientPath, 'index.html'));
   });
 }

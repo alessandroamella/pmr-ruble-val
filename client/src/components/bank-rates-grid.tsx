@@ -233,7 +233,7 @@ export const BankRatesGrid = () => {
   if (isError || !bankRates || bankRates.length === 0) {
     return (
       <Alert variant="destructive">
-        <AlertTitle>Could Not Load Bank Rates</AlertTitle>
+        <AlertTitle>Error while loading bank rates</AlertTitle>
         <AlertDescription>
           There was an issue fetching the latest commercial exchange rates.
           Please try again later.
