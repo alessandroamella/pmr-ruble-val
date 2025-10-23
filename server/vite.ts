@@ -1,14 +1,16 @@
+// server/vite.ts
+
 import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import type { Server } from 'node:http';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import express, { type Express } from 'express';
+import express, { type Express, type Request, type Response } from 'express';
 import { createLogger, createServer as createViteServer } from 'vite';
 import viteConfig from '../vite.config';
 
 const viteLogger = createLogger();
 
+// Logger che usiamo anche in index.ts
 export function log(message: string, source = 'express') {
   const formattedTime = new Date().toLocaleTimeString('en-US', {
     hour: 'numeric',
@@ -20,6 +22,9 @@ export function log(message: string, source = 'express') {
   console.log(`${formattedTime} [${source}] ${message}`);
 }
 
+/**
+ * Imposta il middleware di Vite per l'ambiente di sviluppo.
+ */
 export async function setupVite(app: Express, server: Server) {
   const vite = await createViteServer({
     ...viteConfig,
@@ -38,57 +43,58 @@ export async function setupVite(app: Express, server: Server) {
     appType: 'custom',
   });
 
+  // Usa i middleware di Vite. Questo gestirà l'HMR e servirà i file del client.
   app.use(vite.middlewares);
 
-  app.use('*', async (req, res, next) => {
+  // Catch-all per servire l'index.html processato da Vite.
+  app.use('*', async (req: Request, res: Response, next) => {
     try {
-      const template = await readFile(
-        path.resolve(viteConfig.root as string, 'index.html'),
-        'utf-8',
+      const url = req.originalUrl;
+      const template = await vite.transformIndexHtml(
+        url,
+        await readFile(
+          path.resolve(viteConfig.root as string, 'index.html'),
+          'utf-8',
+        ),
       );
-      const page = await vite.transformIndexHtml(req.originalUrl, template);
-      res.status(200).set({ 'Content-Type': 'text/html' }).end(page);
+      res.status(200).set({ 'Content-Type': 'text/html' }).end(template);
     } catch (e) {
       vite.ssrFixStacktrace(e as Error);
       next(e);
     }
   });
+
+  log('Vite dev middleware-enabled');
 }
+
+/**
+ * Configura Express per servire i file statici della build di produzione.
+ */
 export function serveStatic(app: Express) {
-  const __dirname =
-    import.meta.dirname || path.dirname(fileURLToPath(import.meta.url));
+  // Il path è relativo a DOVE ESEGUI il file, quindi `dist/server.js`
+  const clientBuildPath = path.resolve(import.meta.dirname, 'client');
 
-  const clientPath = path.resolve(__dirname, 'client');
-
-  if (!existsSync(clientPath)) {
+  if (!existsSync(clientBuildPath)) {
     throw new Error(
-      `Build directory not found: ${clientPath}\nRun: npm run build`,
+      `Build directory not found: ${clientBuildPath}\nHave you run 'pnpm build'?`,
     );
   }
 
-  log(`Serving static files from: ${clientPath}`);
+  log(`Serving static files from: ${clientBuildPath}`);
 
-  // Serve static files with caching
+  // 1. Servi i file statici (JS, CSS, immagini, ecc.) dalla cartella di build.
+  // `express.static` ignorerà le richieste che non corrispondono a un file.
   app.use(
-    express.static(clientPath, {
-      maxAge: '1y',
+    express.static(clientBuildPath, {
+      maxAge: '1y', // Cache aggressiva per gli asset con hash
       immutable: true,
-      index: false,
     }),
   );
 
-  // SPA fallback - serve index.html ONLY for routes without extensions
-  app.get('*', (req, res, next) => {
-    // If URL has extension, it's a file request that wasn't found
-    if (/\.\w+$/.test(req.path)) {
-      return res.status(404).send('Not Found');
-    }
-
-    // No extension = it's a client-side route, serve React app
-    res.sendFile(path.join(clientPath, 'index.html'), (err) => {
-      if (err) {
-        next(err);
-      }
-    });
+  // 2. SPA Fallback: Per QUALSIASI altra richiesta GET che non è stata gestita
+  //    prima (né dalle API, né da express.static), servi l'index.html.
+  //    Questo permette al router client-side di prendere il controllo.
+  app.get('*', (_req, res) => {
+    res.sendFile(path.resolve(clientBuildPath, 'index.html'));
   });
 }

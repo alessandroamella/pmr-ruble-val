@@ -1,10 +1,8 @@
-import 'dotenv/config';
+// server/index.ts
 
-import express, {
-  type NextFunction,
-  type Request,
-  type Response,
-} from 'express';
+import 'dotenv/config';
+import type { NextFunction, Request, Response } from 'express';
+import express from 'express';
 import helmet from 'helmet';
 import { envs } from './config/envs';
 import { startExchangeRatesCronJob } from './exchange-rates/exchange-rates.service';
@@ -12,119 +10,94 @@ import { startOfficialRatesCronJob } from './official-data/cron-updater';
 import { registerRoutes } from './routes';
 import { log, serveStatic, setupVite } from './vite';
 
-const app = express();
+async function startServer() {
+  const app = express();
+  const isProduction = envs.NODE_ENV === 'production';
 
-if (envs.NODE_ENV === 'production') {
-  app.use(
-    helmet({
-      contentSecurityPolicy: {
-        directives: {
-          defaultSrc: ["'self'"],
-          // too hard to nonce all the things, allow unsafe-inline for scripts/styles
-          scriptSrc: ["'self'", "'unsafe-inline'"],
-          styleSrc: [
-            "'self'",
-            'https://fonts.googleapis.com',
-            "'unsafe-inline'",
-          ],
-          fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-          connectSrc: ["'self'"],
-          imgSrc: ["'self'", 'data:', 'https://www.ruble.pm/'],
-          objectSrc: ["'none'"],
-          frameAncestors: ["'none'"],
-          formAction: ["'self'"],
-          baseUri: ["'self'"],
-          upgradeInsecureRequests: [],
+  // --- Middleware di base ---
+  if (isProduction) {
+    app.use(
+      helmet({
+        contentSecurityPolicy: {
+          directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'"], // Rimosso 'unsafe-inline' se possibile, altrimenti rimettilo
+            styleSrc: [
+              "'self'",
+              'https://fonts.googleapis.com',
+              "'unsafe-inline'",
+            ],
+            fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+            connectSrc: ["'self'"],
+            imgSrc: ["'self'", 'data:', 'https://www.ruble.pm/'],
+            objectSrc: ["'none'"],
+            frameAncestors: ["'none'"],
+            formAction: ["'self'"],
+            baseUri: ["'self'"],
+          },
         },
-      },
-    }),
-  );
-} else {
-  // In development, keep CSP disabled for Vite HMR and dev tooling
-  app.use(
-    helmet({
-      contentSecurityPolicy: false,
-    }),
-  );
-}
+      }),
+    );
+  } else {
+    app.use(helmet({ contentSecurityPolicy: false }));
+  }
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: false }));
 
-app.use((req, res, next) => {
-  const start = Date.now();
-  const path = req.path;
-  let capturedJsonResponse: Record<string, unknown> | undefined;
-
-  const originalResJson = res.json;
-  res.json = (bodyJson, ...args) => {
-    capturedJsonResponse = bodyJson;
-    return originalResJson.apply(res, [bodyJson, ...args]);
-  };
-
-  res.on('finish', () => {
-    const duration = Date.now() - start;
-    if (path.startsWith('/api')) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-      }
-
-      if (logLine.length > 80) {
-        logLine = `${logLine.slice(0, 79)}…`;
-      }
-
-      log(logLine);
+  // --- Logger per le richieste API ---
+  app.use((req, res, next) => {
+    if (!req.path.startsWith('/api')) {
+      return next();
     }
+    const start = Date.now();
+    res.on('finish', () => {
+      const duration = Date.now() - start;
+      log(`${req.method} ${req.originalUrl} ${res.statusCode} - ${duration}ms`);
+    });
+    next();
   });
 
-  next();
-});
-
-(async () => {
-  // Start the cron job to keep currency data fresh
+  // --- Avvio dei Cron Job ---
   startOfficialRatesCronJob();
-
-  // Start the exchange rates cache refresh cron job
   startExchangeRatesCronJob();
 
+  // --- Registrazione delle rotte API ---
   const server = await registerRoutes(app);
+  log('API routes registered');
 
+  // --- Gestione Frontend (Vite Dev Server o File Statici) ---
+  if (isProduction) {
+    // In produzione, serviamo i file statici della build
+    serveStatic(app);
+  } else {
+    // In sviluppo, usiamo il middleware di Vite
+    await setupVite(app, server);
+  }
+
+  // --- Gestione Errori (deve essere l'ultimo middleware) ---
   app.use(
     (
-      err: Error & {
-        status?: number;
-        statusCode?: number;
-      },
+      err: Error & { status?: number; statusCode?: number },
       _req: Request,
       res: Response,
-      _next: NextFunction,
+      _next: NextFunction, // eslint-disable-line
     ) => {
       const status = err.status || err.statusCode || 500;
       const message = err.message || 'Internal Server Error';
-
-      console.error(`Error encountered: ${message}`, err);
-
-      res.status(status).json({ message });
-      // throw err;
+      console.error(`Error encountered: ${message}`, err.stack);
+      res.status(status).json({ error: { message } });
     },
   );
 
-  if (app.get('env') === 'development') {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
-  }
-
+  // --- Avvio del server ---
   const port = envs.SERVER_PORT;
-  server.listen(
-    {
-      port,
-      host: '0.0.0.0',
-      reusePort: true,
-    },
-    () => {
-      log(`serving on port ${port}`);
-    },
-  );
-})();
+  server.listen({ port, host: '0.0.0.0' }, () => {
+    log(`Server listening on http://localhost:${port}`);
+  });
+}
+
+startServer().catch((err) => {
+  console.error('Failed to start server:', err);
+  process.exit(1);
+});
