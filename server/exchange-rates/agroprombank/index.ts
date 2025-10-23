@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { format, parse } from 'date-fns';
 import type {
   IExchangeRateProvider,
   NormalizedRates,
@@ -34,12 +35,7 @@ function formatDateForApi(date: Date | string): string {
 
 // A helper function to normalize the date from the API response
 function normalizeDateFromApi(apiDate: string): string {
-  // The API returns DD.MM.YYYY, we want YYYY-MM-DD
-  const parts = apiDate.split('.');
-  if (parts.length === 3) {
-    return `${parts[2]}-${parts[1]}-${parts[0]}`;
-  }
-  return apiDate; // Fallback in case the format changes
+  return format(parse(apiDate, 'dd.MM.yyyy', new Date()), 'yyyy-MM-dd');
 }
 
 export class AgroPromBankProvider implements IExchangeRateProvider {
@@ -87,6 +83,13 @@ export class AgroPromBankProvider implements IExchangeRateProvider {
           };
         }
       }
+
+      console.log(
+        `[${this.name}] Fetched ${Object.keys(rates).length} currency rates for date ${format(
+          new Date(normalizeDateFromApi(cashRatesSection.date)),
+          'yyyy-MM-dd',
+        )} (raw date: ${cashRatesSection.date}): ${Object.keys(rates).join(', ')}`,
+      );
 
       // 3. Return the standardized result object
       return {

@@ -42,8 +42,11 @@ export class EximBankProvider implements IExchangeRateProvider {
       _browser = browser;
       const page = await browser.newPage();
       page.setViewport({ width: 1280, height: 800 }); // standard desktop size
+
+      console.log(`[${this.name}] Navigating to ${this.url}...`);
+
       // set a 15 seconds timeout
-      await page.goto(this.url, { waitUntil: 'networkidle2', timeout: 20_000 });
+      await page.goto(this.url, { waitUntil: 'networkidle2', timeout: 30_000 });
 
       if (envs.TAKE_SCREENSHOTS) {
         if (!existsSync(tmpDir)) {
@@ -53,6 +56,8 @@ export class EximBankProvider implements IExchangeRateProvider {
           path: `${join(tmpDir, 'eximbank_first_load')}.png`,
         });
       }
+
+      console.log(`[${this.name}] Page loaded, extracting data...`);
 
       // wait for the stupid auto anti bot
       await page.waitForSelector('.currencies_box .currencies_table tbody tr', {
@@ -98,6 +103,12 @@ export class EximBankProvider implements IExchangeRateProvider {
       if (Object.keys(rates).length === 0) {
         throw new Error('Failed to parse any currency rates from the page.');
       }
+
+      console.log(
+        `[${this.name}] Fetched ${Object.keys(rates).length} currency rates: ${Object.keys(
+          rates,
+        ).join(', ')}`,
+      );
 
       // 4. Return the standardized result object
       return {

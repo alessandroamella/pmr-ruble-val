@@ -1,3 +1,4 @@
+import { format } from 'date-fns';
 import type {
   IExchangeRateProvider,
   NormalizedRates,
@@ -30,8 +31,10 @@ export class PrisBankProvider implements IExchangeRateProvider {
    * @returns A Promise that resolves to a standardized ProviderResult.
    */
   async getRates(date: Date | string = new Date()): Promise<ProviderResult> {
-    const dateString =
-      date instanceof Date ? date.toISOString().split('T')[0] : date;
+    const dateString = format(
+      typeof date === 'string' ? new Date(date) : date,
+      'yyyy-MM-dd',
+    );
 
     const url = new URL('/courses', this.baseUrl);
     url.searchParams.append('date', dateString);
@@ -64,6 +67,13 @@ export class PrisBankProvider implements IExchangeRateProvider {
           sell: course.sale / course.tarif,
         };
       }
+
+      console.log(
+        `[${this.name}] Fetched ${Object.keys(rates).length} currency rates for date ${format(
+          new Date(dateString),
+          'yyyy-MM-dd',
+        )}: ${Object.keys(rates).join(', ')}`,
+      );
 
       // 4. Return the standardized result object
       return {
