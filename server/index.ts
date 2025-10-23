@@ -21,15 +21,28 @@ async function startServer() {
         contentSecurityPolicy: {
           directives: {
             defaultSrc: ["'self'"],
-            scriptSrc: ["'self'"], // Rimosso 'unsafe-inline' se possibile, altrimenti rimettilo
+            scriptSrc: [
+              "'self'",
+              "'unsafe-inline'",
+              'https://www.googletagmanager.com',
+            ],
             styleSrc: [
               "'self'",
               'https://fonts.googleapis.com',
               "'unsafe-inline'",
             ],
             fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-            connectSrc: ["'self'"],
-            imgSrc: ["'self'", 'data:', 'https://www.ruble.pm/'],
+            connectSrc: [
+              "'self'",
+              'https://www.google-analytics.com',
+              'https://analytics.google.com',
+            ],
+            imgSrc: [
+              "'self'",
+              'data:',
+              'https://www.ruble.pm/',
+              'https://www.google-analytics.com',
+            ],
             objectSrc: ["'none'"],
             frameAncestors: ["'none'"],
             formAction: ["'self'"],
