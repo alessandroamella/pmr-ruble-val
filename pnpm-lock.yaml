@@ -188,6 +188,9 @@ importers:
       passport-local:
         specifier: ^1.0.0
         version: 1.0.0
+      permissions-policy:
+        specifier: ^0.6.0
+        version: 0.6.0
       puppeteer:
         specifier: ^24.26.0
         version: 24.26.0(bufferutil@4.0.9)(typescript@5.6.3)
@@ -3401,6 +3404,10 @@ packages:
 
   pend@1.2.0:
     resolution: {integrity: sha512-F3asv42UuXchdzt+xXqfW1OGlVBe+mxa2mqI0pg5yAHZPvFmY3Y6drSf/GQ1A86WgWEN9Kzh/WrgKa6iGcHXLg==}
+
+  permissions-policy@0.6.0:
+    resolution: {integrity: sha512-VfN72swhRiuvfejFP/N5hOVCyriBgzy1KiLE8mjN2KkCJCOtFv2N221SVUHYl0OPXIOoqu7tkc7efreiN7encA==}
+    engines: {node: '>=10.0.0'}
 
   pg-cloudflare@1.2.7:
     resolution: {integrity: sha512-YgCtzMH0ptvZJslLM1ffsY4EuGaU0cx4XSdXLRFae8bPP4dS5xL1tNB3k2o/N64cHJpwU7dxKli/nZ2lUa5fLg==}
@@ -7079,6 +7086,8 @@ snapshots:
   pause@0.0.1: {}
 
   pend@1.2.0: {}
+
+  permissions-policy@0.6.0: {}
 
   pg-cloudflare@1.2.7:
     optional: true

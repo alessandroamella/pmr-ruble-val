@@ -4,6 +4,7 @@ import 'dotenv/config';
 import type { NextFunction, Request, Response } from 'express';
 import express from 'express';
 import helmet from 'helmet';
+import permissionsPolicy from 'permissions-policy';
 import { envs } from './config/envs';
 import { startExchangeRatesCronJob } from './exchange-rates/exchange-rates.service';
 import { startOfficialRatesCronJob } from './official-data/cron-updater';
@@ -49,6 +50,16 @@ async function startServer() {
             formAction: ["'self'"],
             baseUri: ["'self'"],
           },
+        },
+      }),
+    );
+    app.use(
+      permissionsPolicy({
+        features: {
+          fullscreen: ['none'],
+          vibrate: ['none'],
+          payment: ['none'],
+          syncXhr: ['none'],
         },
       }),
     );
