@@ -36,6 +36,7 @@ async function startServer() {
               "'self'",
               'https://www.google-analytics.com',
               'https://analytics.google.com',
+              'https://*.google-analytics.com',
             ],
             imgSrc: [
               "'self'",
