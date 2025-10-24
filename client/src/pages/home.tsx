@@ -82,8 +82,8 @@ export default function Home() {
         transition={{ duration: 0.5 }}
         className="border-b bg-card/50"
       >
-        <div className="max-w-7xl flex flex-col md:flex-row items-center md:justify-around mx-auto px-4 md:px-6 lg:px-8 py-8 md:py-12">
-          <div className="space-y-2">
+        <div className="max-w-7xl flex flex-col md:flex-row items-center gap-x-6 md:justify-around mx-auto px-4 md:px-6 lg:px-8 py-8 md:py-12">
+          <div className="space-y-2 flex-1 min-w-0">
             <h1 className="text-4xl font-bold tracking-tight text-foreground flex flex-col sm:flex-row items-center gap-3">
               <img
                 src={flagImg}
@@ -112,17 +112,15 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="mt-6 md:mt-0">
+          <div className="mt-6 md:mt-0 flex-shrink-0">
             <a
               href="https://ko-fi.com/K3K11NB5XR"
               target="_blank"
               rel="noopener"
             >
               <img
-                height="36"
-                style={{ border: 0, height: 36 }}
+                className="border-none h-9 w-fit object-contain"
                 src="https://storage.ko-fi.com/cdn/kofi6.png?v=6"
-                // border="0"
                 alt="Buy Me a Coffee at ko-fi.com"
               />
             </a>
