@@ -82,7 +82,7 @@ export default function Home() {
         transition={{ duration: 0.5 }}
         className="border-b bg-card/50"
       >
-        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8 md:py-12">
+        <div className="max-w-7xl flex flex-col md:flex-row items-center md:justify-around mx-auto px-4 md:px-6 lg:px-8 py-8 md:py-12">
           <div className="space-y-2">
             <h1 className="text-4xl font-bold tracking-tight text-foreground flex flex-col sm:flex-row items-center gap-3">
               <img
@@ -110,6 +110,22 @@ export default function Home() {
               </a>
               .
             </p>
+          </div>
+
+          <div className="mt-6 md:mt-0">
+            <a
+              href="https://ko-fi.com/K3K11NB5XR"
+              target="_blank"
+              rel="noopener"
+            >
+              <img
+                height="36"
+                style={{ border: 0, height: 36 }}
+                src="https://storage.ko-fi.com/cdn/kofi6.png?v=6"
+                // border="0"
+                alt="Buy Me a Coffee at ko-fi.com"
+              />
+            </a>
           </div>
         </div>
       </motion.header>
