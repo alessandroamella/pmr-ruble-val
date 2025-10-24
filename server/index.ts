@@ -42,8 +42,9 @@ async function startServer() {
             imgSrc: [
               "'self'",
               'data:',
-              'https://www.ruble.pm/',
+              'https://www.ruble.pm',
               'https://www.google-analytics.com',
+              'https://storage.ko-fi.com',
             ],
             objectSrc: ["'none'"],
             frameAncestors: ["'none'"],
