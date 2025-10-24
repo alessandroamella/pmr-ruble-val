@@ -66,3 +66,9 @@ Each bank has its own scraper module that adheres to the `IExchangeRateProvider`
 Data from commercial banks is cached with a simple in-memory cache (with `node-cache`) for 6 hours, as it's unlikely that exchange rates will change more often than that.
 
 While data from the official bank is fetched every day at 2AM server time with a cron job (using `node-cron`), and only the saved time is returned to clients.
+
+### Support the project
+
+If you find this project useful and would like to support its development, consider donating via Ko-fi. Every contribution is greatly appreciated and helps keep the project running. Thank you!
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/K3K11NB5XR)
