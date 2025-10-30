@@ -41,6 +41,8 @@ async function startServer() {
               'https://region1.google-analytics.com',
               'https://www.google.com',
               'https://www.googleadservices.com',
+              'https://googleads.g.doubleclick.net',
+              'https://www.google.it',
             ],
             imgSrc: [
               "'self'",
@@ -49,6 +51,9 @@ async function startServer() {
               'https://www.google-analytics.com',
               'https://www.google.com',
               'https://storage.ko-fi.com',
+              'https://googleads.g.doubleclick.net',
+              'https://www.googleadservices.com',
+              'https://www.google.it',
             ],
             frameSrc: ['https://www.googletagmanager.com'],
             objectSrc: ["'none'"],
