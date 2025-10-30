@@ -8,6 +8,16 @@ import NotFound from '@/pages/not-found';
 import { Ga4PageViewTracker } from './components/ga4-page-view-tracker';
 import { queryClient } from './lib/queryClient';
 
+declare global {
+  interface Window {
+    gtag?: (
+      event: string,
+      action: string,
+      params: Record<string, unknown>,
+    ) => void;
+  }
+}
+
 const ga4MeasurementId = import.meta.env.VITE_GA4_MEASUREMENT_ID;
 if (ga4MeasurementId) {
   ReactGA.initialize(ga4MeasurementId);
@@ -15,6 +25,25 @@ if (ga4MeasurementId) {
   console.warn(
     'GA4 Measurement ID is not set. Google Analytics will not be initialized.',
   );
+}
+
+const gAdsSendTo = import.meta.env.VITE_GADS_SEND_TO;
+
+if (window.gtag && gAdsSendTo) {
+  window.gtag('event', 'conversion', {
+    send_to: gAdsSendTo,
+  });
+} else {
+  if (!window.gtag) {
+    console.warn(
+      'gtag function is not available. Google Ads conversion tracking will not work.',
+    );
+  }
+  if (!gAdsSendTo) {
+    console.warn(
+      'Google Ads send_to ID is not set. Google Ads conversion tracking will not work.',
+    );
+  }
 }
 
 function Router() {
