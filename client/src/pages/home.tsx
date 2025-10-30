@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import ReactGA from 'react-ga4';
 import { FaEnvelope, FaGithub } from 'react-icons/fa';
 import Obfuscate from 'react-obfuscate';
+import AboutContent from '@/components/about-content';
 import { ApiStatusBanner } from '@/components/api-status-banner';
 import { BankRatesGrid } from '@/components/bank-rates-grid';
 import { CurrencyConverter } from '@/components/currency-converter';
@@ -294,8 +295,8 @@ export default function Home() {
                 Historical Trends
               </CardTitle>
               <CardDescription>
-                Exchange rate trends for selected currencies against the
-                Transnistrian Ruble.
+                Track how the Transnistrian ruble's value has changed over time
+                compared to major currencies like the Euro and the Dollar.
               </CardDescription>
             </CardHeader>
             <CardContent className="p-0 md:p-6">
@@ -314,26 +315,7 @@ export default function Home() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ul className="text-sm -mt-3 text-muted-foreground leading-relaxed list-disc list-inside space-y-2">
-                <li>
-                  The Transnistrian Ruble is de facto pegged to the US Dollar.
-                  The central bank evaluates daily whether adjustments to the
-                  exchange rate are necessary.
-                </li>
-                <li>
-                  This website uses the term "Transnistrian Ruble" for clarity
-                  and recognizability, but the official name is "
-                  <strong>Pridnestrovian Ruble</strong>".
-                </li>
-                <li>
-                  Due to Pridnestrovie being a state with limited recognition,
-                  its currency has no ISO 4217 code. However, some
-                  Pridnestrovian organizations such as Agroprombank and
-                  Gazprombank use <strong>PRB</strong> as the ISO 4217 code.
-                  This website adopts the PRB code for consistency with these
-                  institutions.
-                </li>
-              </ul>
+              <AboutContent />
             </CardContent>
           </Card>
         </motion.div>
