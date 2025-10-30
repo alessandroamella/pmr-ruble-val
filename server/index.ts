@@ -67,10 +67,9 @@ async function startServer() {
     app.use(
       permissionsPolicy({
         features: {
-          fullscreen: ['none'],
-          vibrate: ['none'],
-          payment: ['none'],
-          syncXhr: ['none'],
+          fullscreen: [],
+          payment: [],
+          'sync-xhr': [],
         },
       }),
     );
