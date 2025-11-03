@@ -11,6 +11,6 @@ export async function prepareTmpDir() {
     logger.info(`Creating temporary directory at: ${tmpDir}`);
     await mkdir(tmpDir, { recursive: true });
   } else {
-    logger.debug(`Temporary directory already exists at: ${tmpDir}`);
+    logger.info(`Temporary directory already exists at: ${tmpDir}`);
   }
 }
