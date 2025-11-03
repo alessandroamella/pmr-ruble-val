@@ -6,7 +6,7 @@ import type { ProviderResult } from './exchange.types';
 import { providers } from './providers';
 
 const CACHE_TTL_SECONDS = 6 * 60 * 60; // 6 hours in seconds
-const CRON_SCHEDULE = '0 */4 * * *'; // Every 4 hours at minute 0
+const CRON_SCHEDULE = '0 */3 * * *'; // Every 3 hours at minute 0
 
 export const cache = new NodeCache({
   stdTTL: CACHE_TTL_SECONDS,
@@ -153,7 +153,6 @@ export const getAvailableProviders = (): string[] => {
  * Runs at: 00:00, 06:00, 12:00, 18:00
  */
 export const startExchangeRatesCronJob = () => {
-  // Run every 6 hours at minute 0
   cron.schedule(CRON_SCHEDULE, async () => {
     logger.info('Starting scheduled cache refresh for all providers...');
     try {
