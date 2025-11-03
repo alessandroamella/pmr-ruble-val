@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import './config/prepare-dirs';
+import './config';
 
 import type { NextFunction, Request, Response } from 'express';
 import express from 'express';
