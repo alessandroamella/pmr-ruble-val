@@ -142,13 +142,23 @@ export class EximBankProvider implements IExchangeRateProvider {
             await _page.screenshot({
               path: `${join(tmpDir, 'eximbank_error_from_page')}.png`,
             });
+            logger.info(`[${this.name}] Error screenshot taken from page`);
           } else if (_browser) {
             const pages = await _browser.pages();
             if (pages.length > 0) {
               await pages[0].screenshot({
                 path: `${join(tmpDir, 'eximbank_error)from_browser')}.png`,
               });
+              logger.info(`[${this.name}] Error screenshot taken from browser`);
+            } else {
+              logger.warn(
+                `[${this.name}] No pages found in browser to take screenshot from.`,
+              );
             }
+          } else {
+            logger.warn(
+              `[${this.name}] No browser instance available to take screenshot from.`,
+            );
           }
         } catch (err) {
           logger.error(`[${this.name}] Failed to take error screenshot:`, err);
