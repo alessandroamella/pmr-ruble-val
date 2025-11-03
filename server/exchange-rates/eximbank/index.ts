@@ -53,10 +53,28 @@ export class EximBankProvider implements IExchangeRateProvider {
       // Use networkidle2 which waits until there are no more than 2 network connections
       // for at least 500ms. This is more lenient than domcontentloaded and handles
       // pages with slow-loading resources better.
-      await page.goto(this.url, {
-        waitUntil: 'networkidle2',
-        timeout: 30_000,
-      });
+
+      try {
+        await page.goto(this.url, {
+          waitUntil: 'networkidle2',
+          timeout: 30_000,
+        });
+      } catch (navError) {
+        // check if selector is there. If so, then don't throw error. Else propagate
+        logger.warn(
+          `[${this.name}] Initial navigation failed, checking for currency table...`,
+        );
+        const tableExists = await page.$('.currencies_box .currencies_table');
+        if (!tableExists) {
+          logger.warn(
+            `[${this.name}] Currency table not found after navigation failure.`,
+          );
+          throw navError;
+        }
+        logger.debug(
+          `[${this.name}] Currency table found despite navigation error, continuing...`,
+        );
+      }
 
       if (envs.TAKE_SCREENSHOTS) {
         await page.screenshot({
