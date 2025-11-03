@@ -1,11 +1,9 @@
-import { existsSync } from 'node:fs';
-import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { Browser } from 'puppeteer';
+import type { Browser, Page } from 'puppeteer';
 import puppeteer from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { envs } from 'server/config/envs';
-import { ROOT_PATH } from 'server/paths';
+import { tmpDir } from 'server/config/prepare-dirs';
 import { logger } from 'server/utils/logger';
 import type {
   IExchangeRateProvider,
@@ -14,8 +12,6 @@ import type {
 } from '../exchange.types';
 
 puppeteer.use(StealthPlugin());
-
-const tmpDir = join(ROOT_PATH, './tmp');
 
 export class EximBankProvider implements IExchangeRateProvider {
   readonly name = 'EximBank';
@@ -31,6 +27,7 @@ export class EximBankProvider implements IExchangeRateProvider {
   async getRates(_date?: Date | string): Promise<ProviderResult> {
     const rates: NormalizedRates = {};
     let _browser: Browser | null = null;
+    let _page: Page | null = null;
 
     try {
       // 1. Launch browser and navigate to the page
@@ -42,6 +39,7 @@ export class EximBankProvider implements IExchangeRateProvider {
       });
       _browser = browser;
       const page = await browser.newPage();
+      _page = page;
 
       await page.setUserAgent({
         userAgent:
@@ -68,9 +66,6 @@ export class EximBankProvider implements IExchangeRateProvider {
       });
 
       if (envs.TAKE_SCREENSHOTS) {
-        if (!existsSync(tmpDir)) {
-          await mkdir(tmpDir, { recursive: true });
-        }
         await page.screenshot({
           path: `${join(tmpDir, 'eximbank_first_load')}.png`,
         });
@@ -139,6 +134,27 @@ export class EximBankProvider implements IExchangeRateProvider {
       };
     } catch (error) {
       logger.error(`[${this.name}] Error fetching or parsing rates:`, error);
+
+      // if there is a page open, try to take a screenshot for debugging
+      if (envs.TAKE_SCREENSHOTS) {
+        try {
+          if (_page) {
+            await _page.screenshot({
+              path: `${join(tmpDir, 'eximbank_error_from_page')}.png`,
+            });
+          } else if (_browser) {
+            const pages = await _browser.pages();
+            if (pages.length > 0) {
+              await pages[0].screenshot({
+                path: `${join(tmpDir, 'eximbank_error)from_browser')}.png`,
+              });
+            }
+          }
+        } catch (err) {
+          logger.error(`[${this.name}] Failed to take error screenshot:`, err);
+        }
+      }
+
       throw new Error(`Failed to retrieve exchange rates from ${this.name}.`);
     } finally {
       // 5. Always close the browser

@@ -1,6 +1,6 @@
-// server/index.ts
-
 import 'dotenv/config';
+import './config/prepare-dirs';
+
 import type { NextFunction, Request, Response } from 'express';
 import express from 'express';
 import helmet from 'helmet';
