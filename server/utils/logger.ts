@@ -96,7 +96,12 @@ export class Logger {
     const fileEntry = `[${timestamp}] [${level}] ${message}\n`;
 
     if (this.enableConsole) {
-      console.log(consoleEntry);
+      // if error print on stderr
+      if (level === 'ERROR') {
+        console.error(consoleEntry);
+      } else {
+        console.log(consoleEntry);
+      }
     }
 
     if (this.enableFile) {
