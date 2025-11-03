@@ -44,24 +44,17 @@ export class EximBankProvider implements IExchangeRateProvider {
       await page.setUserAgent({
         userAgent:
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
-        // platform: 'Win32',
-        // userAgentMetadata: {
-        //   architecture: 'x86',
-        //   model: '',
-        //   platform: 'Windows',
-        //   platformVersion: '10.0',
-        //   mobile: false,
-        // },
       });
-      page.setViewport({ width: 1280, height: 800 });
 
       page.setViewport({ width: 1280, height: 800 }); // standard desktop size
 
       logger.info(`[${this.name}] Navigating to ${this.url}...`);
 
-      // set a reasonable 30 seconds timeout
+      // Use networkidle2 which waits until there are no more than 2 network connections
+      // for at least 500ms. This is more lenient than domcontentloaded and handles
+      // pages with slow-loading resources better.
       await page.goto(this.url, {
-        waitUntil: 'domcontentloaded',
+        waitUntil: 'networkidle2',
         timeout: 30_000,
       });
 
@@ -72,11 +65,6 @@ export class EximBankProvider implements IExchangeRateProvider {
       }
 
       logger.info(`[${this.name}] Page loaded, extracting data...`);
-
-      // wait for the stupid auto anti bot
-      await page.waitForSelector('.currencies_box .currencies_table tbody tr', {
-        timeout: 20_000,
-      });
       if (envs.TAKE_SCREENSHOTS) {
         await page.screenshot({
           path: `${join(tmpDir, 'eximbank_after_wait')}.png`,
