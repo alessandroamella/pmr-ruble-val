@@ -2,6 +2,7 @@ import { URLSearchParams } from 'node:url';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { formatDate } from 'date-fns';
+import { logger } from 'server/utils/logger';
 import { sleep } from 'server/utils/sleep';
 
 // --- SHARED CONSTANTS AND INTERFACES ---
@@ -124,7 +125,7 @@ export async function fetchCurrencyData(
       },
     );
   } catch (error) {
-    console.error(
+    logger.error(
       `Error fetching data for ${currencyName} (${currencyCode}):`,
       error,
     );
@@ -144,14 +145,14 @@ export async function getAllCurrencyDataAsJson(
   fromDate: Date,
   toDate: Date,
 ): Promise<RateRecord[]> {
-  console.log(
+  logger.info(
     `Fetching all currency data from ${formatDate(fromDate, 'yyyy-MM-dd')} to ${formatDate(toDate, 'yyyy-MM-dd')}`,
   );
 
   const allRecords: RateRecord[] = [];
 
   for (const [code, name] of Object.entries(CURRENCIES)) {
-    console.log(` -> Fetching: ${name}`);
+    logger.info(` -> Fetching: ${name}`);
     const currencyRecords = await fetchCurrencyData(
       code,
       name,
@@ -169,6 +170,6 @@ export async function getAllCurrencyDataAsJson(
       a.currency_name.localeCompare(b.currency_name),
   );
 
-  console.log(`Finished fetching. Total records: ${allRecords.length}`);
+  logger.info(`Finished fetching. Total records: ${allRecords.length}`);
   return allRecords;
 }

@@ -4,6 +4,7 @@ import cron from 'node-cron';
 import { envs } from 'server/config/envs';
 import { db } from 'server/db';
 import { exchangeRates, type NewExchangeRate } from 'server/db/schema';
+import { logger } from 'server/utils/logger';
 import { sleep } from 'server/utils/sleep';
 import { CURRENCIES, fetchCurrencyData } from './scraper-logic';
 
@@ -14,9 +15,7 @@ const FROM_DAYS_AGO = 3; // Number of days back to fetch data for
  * The core function that performs the update logic for all currencies.
  */
 export async function updateRates() {
-  console.log(
-    `[${new Date().toISOString()}] Starting scheduled rate update...`,
-  );
+  logger.info('Starting scheduled rate update...');
 
   const tomorrow = addDays(new Date(), 1);
   const nDaysAgo = subDays(new Date(), FROM_DAYS_AGO);
@@ -26,20 +25,20 @@ export async function updateRates() {
   for (const [code, name] of Object.entries(CURRENCIES)) {
     await sleep(1000); // Be polite to the source API
 
-    console.log(`\n-> Checking currency: ${name} (${code})`);
+    logger.info(`\n-> Checking currency: ${name} (${code})`);
 
     // 1. Fetch fresh data for specified date range.
     const newRecords = await fetchCurrencyData(code, name, nDaysAgo, tomorrow);
 
     if (newRecords.length === 0) {
-      console.log('   No recent data found from the source.');
+      logger.info('   No recent data found from the source.');
       continue;
     }
 
     // 2. Determine the currency code.
     const letterCode = newRecords[0].letter_code?.toLowerCase();
     if (!letterCode) {
-      console.warn(
+      logger.warn(
         `   WARNING: Could not determine letter code for ${name}. Skipping.`,
       );
       continue;
@@ -59,7 +58,7 @@ export async function updateRates() {
 
     if (valuesToInsert.length === 0) continue;
 
-    console.log(
+    logger.info(
       `   Found ${valuesToInsert.length} records to process for ${name} (${letterCode}).`,
     );
 
@@ -76,31 +75,31 @@ export async function updateRates() {
       .returning({ updatedDate: exchangeRates.date });
 
     if (result.length > 0) {
-      console.log(`   ✅ Upserted ${result.length} records for ${letterCode}.`);
+      logger.info(`   ✅ Upserted ${result.length} records for ${letterCode}.`);
       updatedRecordCount += result.length;
     }
   }
 
-  console.log(
-    `\n[${new Date().toISOString()}] Update cycle finished. ${updatedRecordCount} records were upserted.`,
+  logger.info(
+    `\nUpdate cycle finished. ${updatedRecordCount} records were upserted.`,
   );
 }
 
 // Schedules and starts the cron job for updating official rates
 export function startOfficialRatesCronJob() {
-  console.log(
+  logger.info(
     `Official rates updater cron job initialized with pattern: "${CRON_SCHEDULE}"`,
   );
 
   // Optional: Run on startup
   if (envs.RUN_ON_STARTUP) {
-    console.log('Running initial update on startup...');
-    updateRates().catch((err) => console.error('Initial update failed:', err));
+    logger.info('Running initial update on startup...');
+    updateRates().catch((err) => logger.error('Initial update failed:', err));
   }
 
   cron.schedule(CRON_SCHEDULE, () => {
     updateRates().catch((error) => {
-      console.error(
+      logger.error(
         'A critical error occurred during the scheduled update:',
         error,
       );

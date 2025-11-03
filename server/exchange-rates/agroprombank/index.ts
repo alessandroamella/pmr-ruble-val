@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { format, parse } from 'date-fns';
+import { logger } from 'server/utils/logger';
 import type {
   IExchangeRateProvider,
   NormalizedRates,
@@ -84,7 +85,7 @@ export class AgroPromBankProvider implements IExchangeRateProvider {
         }
       }
 
-      console.log(
+      logger.info(
         `[${this.name}] Fetched ${Object.keys(rates).length} currency rates for date ${format(
           new Date(normalizeDateFromApi(cashRatesSection.date)),
           'yyyy-MM-dd',
@@ -99,7 +100,7 @@ export class AgroPromBankProvider implements IExchangeRateProvider {
         bankUrl: 'https://www.agroprombank.com',
       };
     } catch (error) {
-      console.error(`[${this.name}] Error fetching or parsing rates:`, error);
+      logger.error(`[${this.name}] Error fetching or parsing rates:`, error);
       throw new Error(`Failed to retrieve exchange rates from ${this.name}.`);
     }
   }

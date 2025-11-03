@@ -7,6 +7,7 @@ import { DrizzleQueryError } from 'drizzle-orm';
 import { db } from 'server/db'; // Your centralized drizzle instance
 import { exchangeRates, type NewExchangeRate } from 'server/db/schema';
 import { CURRENCIES_CSV_DATA_DIR } from 'server/official-data/currencies-csv-data-dir';
+import { logger } from 'server/utils/logger';
 
 // Define the batch size for insertions.
 // Inserting thousands of rows one-by-one is slow. Batching is much faster.
@@ -38,8 +39,8 @@ async function readCsvFile(filePath: string): Promise<SimpleRateRecord[]> {
  * Call only once to migrate data from CSV files to the database.
  */
 export async function migrateCsvToDb() {
-  console.log('🚀 Starting migration from CSV files to SQLite database...');
-  console.log(`Looking for CSV files in: ${CURRENCIES_CSV_DATA_DIR}`);
+  logger.info('🚀 Starting migration from CSV files to SQLite database...');
+  logger.info(`Looking for CSV files in: ${CURRENCIES_CSV_DATA_DIR}`);
 
   // 1. Get a list of all .csv files from your data directory.
   const allFiles = await readdir(CURRENCIES_CSV_DATA_DIR);
@@ -48,11 +49,11 @@ export async function migrateCsvToDb() {
   );
 
   if (csvFiles.length === 0) {
-    console.log('No CSV files found. Exiting.');
+    logger.info('No CSV files found. Exiting.');
     return;
   }
 
-  console.log(`Found ${csvFiles.length} CSV files to process.`);
+  logger.info(`Found ${csvFiles.length} CSV files to process.`);
   let totalRowsMigrated = 0;
 
   // 2. Process each CSV file one by one.
@@ -61,17 +62,17 @@ export async function migrateCsvToDb() {
     const currencyCode = path.parse(fileName).name.toLowerCase();
     const filePath = path.join(CURRENCIES_CSV_DATA_DIR, fileName);
 
-    console.log(`\nProcessing ${fileName} for currency [${currencyCode}]...`);
+    logger.info(`\nProcessing ${fileName} for currency [${currencyCode}]...`);
 
     try {
       const records = await readCsvFile(filePath);
 
       if (records.length === 0) {
-        console.log(`  -> No records found in ${fileName}. Skipping.`);
+        logger.info(`  -> No records found in ${fileName}. Skipping.`);
         continue;
       }
 
-      console.log(`  -> Found ${records.length} records to migrate.`);
+      logger.info(`  -> Found ${records.length} records to migrate.`);
 
       // 3. Transform CSV data into the format for our database schema.
       const dataToInsert: NewExchangeRate[] = records.map((rec) => {
@@ -94,19 +95,19 @@ export async function migrateCsvToDb() {
         // already exists.
         await db.insert(exchangeRates).values(batch).onConflictDoNothing();
 
-        console.log(
+        logger.info(
           `  -> Inserted batch ${i / BATCH_SIZE + 1} (${batch.length} rows)`,
         );
       }
 
       totalRowsMigrated += dataToInsert.length;
-      console.log(
+      logger.info(
         `  ✅ Successfully migrated ${dataToInsert.length} rows for ${currencyCode}.`,
       );
     } catch (error) {
-      console.error(`  ❌ Failed to process ${fileName}:\n  -> `);
+      logger.error(`  ❌ Failed to process ${fileName}:\n  -> `);
       if (error instanceof DrizzleQueryError) {
-        console.warn(
+        logger.warn(
           'DrizzleQueryError occurred,' +
             '\nname:' +
             error.name +
@@ -118,22 +119,22 @@ export async function migrateCsvToDb() {
             error.cause?.cause,
         );
       } else {
-        console.error('Unexpected error:', error);
+        logger.error('Unexpected error:', error);
       }
     }
   }
 
   if (totalRowsMigrated > 0) {
-    console.log('\n🎉 Migration complete!');
-    console.log(`Total rows processed and migrated: ${totalRowsMigrated}`);
+    logger.info('\n🎉 Migration complete!');
+    logger.info(`Total rows processed and migrated: ${totalRowsMigrated}`);
   } else {
-    console.log(
+    logger.info(
       '\n⚠️  No new rows were migrated. Database may already be up to date.',
     );
   }
 }
 
 migrateCsvToDb().catch((error) => {
-  console.error('Migration failed with error:', error);
+  logger.error('Migration failed with error:', error);
   process.exit(1);
 });

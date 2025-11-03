@@ -8,4 +8,4 @@ currency_data
 .env
 tmp
 *.db
-
+app.log

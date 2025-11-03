@@ -6,6 +6,7 @@ import puppeteer from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { envs } from 'server/config/envs';
 import { ROOT_PATH } from 'server/paths';
+import { logger } from 'server/utils/logger';
 import type {
   IExchangeRateProvider,
   NormalizedRates,
@@ -43,9 +44,9 @@ export class EximBankProvider implements IExchangeRateProvider {
       const page = await browser.newPage();
       page.setViewport({ width: 1280, height: 800 }); // standard desktop size
 
-      console.log(`[${this.name}] Navigating to ${this.url}...`);
+      logger.info(`[${this.name}] Navigating to ${this.url}...`);
 
-      // set a 15 seconds timeout
+      // set a reasonable 30 seconds timeout
       await page.goto(this.url, { waitUntil: 'networkidle2', timeout: 30_000 });
 
       if (envs.TAKE_SCREENSHOTS) {
@@ -57,7 +58,7 @@ export class EximBankProvider implements IExchangeRateProvider {
         });
       }
 
-      console.log(`[${this.name}] Page loaded, extracting data...`);
+      logger.info(`[${this.name}] Page loaded, extracting data...`);
 
       // wait for the stupid auto anti bot
       await page.waitForSelector('.currencies_box .currencies_table tbody tr', {
@@ -104,7 +105,7 @@ export class EximBankProvider implements IExchangeRateProvider {
         throw new Error('Failed to parse any currency rates from the page.');
       }
 
-      console.log(
+      logger.info(
         `[${this.name}] Fetched ${Object.keys(rates).length} currency rates: ${Object.keys(
           rates,
         ).join(', ')}`,
@@ -119,7 +120,7 @@ export class EximBankProvider implements IExchangeRateProvider {
         bankUrl: 'https://bankexim.com/',
       };
     } catch (error) {
-      console.error(`[${this.name}] Error fetching or parsing rates:`, error);
+      logger.error(`[${this.name}] Error fetching or parsing rates:`, error);
       throw new Error(`Failed to retrieve exchange rates from ${this.name}.`);
     } finally {
       // 5. Always close the browser

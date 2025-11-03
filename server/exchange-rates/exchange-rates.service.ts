@@ -1,6 +1,7 @@
 import { isValid, parseISO } from 'date-fns';
 import NodeCache from 'node-cache';
 import cron from 'node-cron';
+import { logger } from 'server/utils/logger';
 import type { ProviderResult } from './exchange.types';
 import { providers } from './providers';
 
@@ -57,11 +58,11 @@ export const fetchAllProviderRates = async (
   // Log any providers that failed for debugging purposes.
   results.forEach((result) => {
     if (result.status === 'rejected') {
-      console.error('A provider failed to fetch rates:', result.reason);
+      logger.error('A provider failed to fetch rates:', result.reason);
     }
   });
 
-  console.log(`Fetched rates from ${successfulRates.length} providers`);
+  logger.info(`Fetched rates from ${successfulRates.length} providers`);
 
   return successfulRates;
 };
@@ -91,7 +92,7 @@ export const fetchProviderRates = async (
   }
 
   const rates = await provider.getRates(date);
-  console.log(`Fetched rates from ${provider.name}`);
+  logger.info(`Fetched rates from ${provider.name}`);
 
   // Store the result in cache
   cache.set(cacheKey, rates);
@@ -114,16 +115,16 @@ export const getAvailableProviders = (): string[] => {
 export const startExchangeRatesCronJob = () => {
   // Run every 6 hours at minute 0
   cron.schedule(CRON_SCHEDULE, async () => {
-    console.log('Starting scheduled cache refresh for all providers...');
+    logger.info('Starting scheduled cache refresh for all providers...');
     try {
       await fetchAllProviderRates();
-      console.log('Scheduled cache refresh completed successfully');
+      logger.info('Scheduled cache refresh completed successfully');
     } catch (error) {
-      console.error('Error during scheduled cache refresh:', error);
+      logger.error('Error during scheduled cache refresh:', error);
     }
   });
 
-  console.log(
+  logger.info(
     `Banks exchange rates cache refresh cron job started with pattern "${CRON_SCHEDULE}"`,
   );
 };

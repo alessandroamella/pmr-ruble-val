@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import { Router } from 'express';
+import { logger } from 'server/utils/logger.ts';
 import {
   cache,
   getAllLatestRates,
@@ -25,7 +26,7 @@ router.get('/latest', async (_req: Request, res: Response) => {
     cache.set(cacheKey, allLatestRates);
     return res.status(200).json(allLatestRates);
   } catch (error) {
-    console.error('Error fetching all latest rates:', error);
+    logger.error('Error fetching all latest rates:', error);
     return res
       .status(500)
       .json({ error: 'An internal server error occurred.' });
@@ -54,7 +55,7 @@ router.get('/:currency/latest', async (req: Request, res: Response) => {
       error: `No rate records found for currency '${currencyCode}'.`,
     });
   } catch (error) {
-    console.error(`Error fetching latest rate for ${currencyCode}:`, error);
+    logger.error(`Error fetching latest rate for ${currencyCode}:`, error);
     return res
       .status(500)
       .json({ error: 'An internal server error occurred.' });
@@ -98,7 +99,7 @@ router.get('/historical', async (req: Request, res: Response) => {
     cache.set(cacheKey, data);
     return res.status(200).json(data);
   } catch (error) {
-    console.error('Error fetching currency data:', error);
+    logger.error('Error fetching currency data:', error);
     return res
       .status(500)
       .json({ error: 'An internal server error occurred.' });

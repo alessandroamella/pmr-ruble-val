@@ -7,6 +7,7 @@ import path from 'node:path';
 import express, { type Express, type Request, type Response } from 'express';
 import { createLogger, createServer as createViteServer } from 'vite';
 import viteConfig from '../vite.config';
+import { logger } from './utils/logger';
 
 const viteLogger = createLogger();
 
@@ -19,7 +20,7 @@ export function log(message: string, source = 'express') {
     hour12: true,
   });
 
-  console.log(`${formattedTime} [${source}] ${message}`);
+  logger.info(`${formattedTime} [${source}] ${message}`);
 }
 
 /**

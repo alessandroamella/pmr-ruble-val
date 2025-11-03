@@ -1,4 +1,5 @@
 import { format } from 'date-fns';
+import { logger } from 'server/utils/logger';
 import type {
   IExchangeRateProvider,
   NormalizedRates,
@@ -68,7 +69,7 @@ export class PrisBankProvider implements IExchangeRateProvider {
         };
       }
 
-      console.log(
+      logger.info(
         `[${this.name}] Fetched ${Object.keys(rates).length} currency rates for date ${format(
           new Date(dateString),
           'yyyy-MM-dd',
@@ -83,7 +84,7 @@ export class PrisBankProvider implements IExchangeRateProvider {
         bankUrl: 'https://prisbank.com',
       };
     } catch (error) {
-      console.error(`[${this.name}] Error fetching or parsing rates:`, error);
+      logger.error(`[${this.name}] Error fetching or parsing rates:`, error);
       throw new Error(`Failed to retrieve exchange rates from ${this.name}.`);
     }
   }

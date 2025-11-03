@@ -9,6 +9,7 @@ import { envs } from './config/envs';
 import { startExchangeRatesCronJob } from './exchange-rates/exchange-rates.service';
 import { startOfficialRatesCronJob } from './official-data/cron-updater';
 import { registerRoutes } from './routes';
+import { logger } from './utils/logger';
 import { log, serveStatic, setupVite } from './vite';
 
 async function startServer() {
@@ -120,7 +121,7 @@ async function startServer() {
     ) => {
       const status = err.status || err.statusCode || 500;
       const message = err.message || 'Internal Server Error';
-      console.error(`Error encountered: ${message}`, err.stack);
+      logger.error(`Error encountered: ${message}`, err.stack);
       res.status(status).json({ error: { message } });
     },
   );
@@ -133,6 +134,6 @@ async function startServer() {
 }
 
 startServer().catch((err) => {
-  console.error('Failed to start server:', err);
+  logger.error('Failed to start server:', err);
   process.exit(1);
 });

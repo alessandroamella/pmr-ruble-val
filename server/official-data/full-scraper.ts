@@ -4,6 +4,7 @@ import pLimit from 'p-limit';
 import { envs } from 'server/config/envs';
 import { db } from 'server/db';
 import { exchangeRates, type NewExchangeRate } from 'server/db/schema';
+import { logger } from 'server/utils/logger';
 import { sleep } from 'server/utils/sleep';
 import { CURRENCIES, fetchCurrencyData } from './scraper-logic';
 
@@ -31,7 +32,7 @@ function formatDate(date: Date): string {
  * @returns A promise that resolves to the number of records upserted, or 0 if failed.
  */
 async function processCurrency(code: string, name: string): Promise<number> {
-  console.log(`[START] Fetching data for: ${name} (${code})`);
+  logger.info(`[START] Fetching data for: ${name} (${code})`);
 
   try {
     const currencyRecords = await fetchCurrencyData(
@@ -42,17 +43,17 @@ async function processCurrency(code: string, name: string): Promise<number> {
     );
 
     if (currencyRecords.length === 0) {
-      console.warn(` -> [SKIP] No records found for ${name}. Skipping.`);
+      logger.warn(` -> [SKIP] No records found for ${name}. Skipping.`);
       return 0;
     }
 
-    console.log(
+    logger.info(
       ` -> [FETCHED] ${name} (${code}) - Found ${currencyRecords.length} records.`,
     );
 
     const letterCode = currencyRecords[0].letter_code?.toLowerCase();
     if (!letterCode) {
-      console.warn(` -> [SKIP] Could not determine letter code for ${name}.`);
+      logger.warn(` -> [SKIP] Could not determine letter code for ${name}.`);
       return 0;
     }
 
@@ -82,7 +83,7 @@ async function processCurrency(code: string, name: string): Promise<number> {
       })
       .returning({ updatedDate: exchangeRates.date });
 
-    console.log(
+    logger.info(
       `   -> [SAVED] ${name} (${code}) - Upserted ${result.length} records to database`,
     );
 
@@ -91,7 +92,7 @@ async function processCurrency(code: string, name: string): Promise<number> {
 
     return result.length;
   } catch (error) {
-    console.error(` -> [ERROR] Failed to process ${name} (${code}):`, error);
+    logger.error(` -> [ERROR] Failed to process ${name} (${code}):`, error);
     return 0; // Indicate failure for this currency
   }
 }
@@ -100,11 +101,11 @@ async function processCurrency(code: string, name: string): Promise<number> {
  * Main function, orchestrating parallel processing and inserting data into the database.
  */
 async function main() {
-  console.log(
+  logger.info(
     `Starting historical data loader for ${Object.keys(CURRENCIES).length} currencies...`,
   );
-  console.log(`Concurrency level set to: ${PARALLEL_FETCHES}`);
-  console.log(
+  logger.info(`Concurrency level set to: ${PARALLEL_FETCHES}`);
+  logger.info(
     `Date range: ${formatDate(START_DATE)} to ${formatDate(END_DATE)}\n`,
   );
 
@@ -123,13 +124,13 @@ async function main() {
   // Sum up the total number of records upserted.
   const totalRecordsUpserted = results.reduce((sum, count) => sum + count, 0);
 
-  console.log(
+  logger.info(
     `\n🎉 All done! Upserted ${totalRecordsUpserted} total records into the database.`,
   );
 }
 
 main().catch((error) => {
-  console.error(
+  logger.error(
     'A critical error occurred during the historical data loading script:',
     error,
   );
