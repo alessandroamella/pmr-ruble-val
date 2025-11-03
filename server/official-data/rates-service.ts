@@ -1,9 +1,9 @@
 import { and, between, desc, eq, inArray, sql } from 'drizzle-orm';
-import NodeCache from 'node-cache';
 import { db } from 'server/db';
 import { exchangeRates } from 'server/db/schema';
+import { redisCacheService } from 'server/services/cache.service'; // <-- IMPORT the new service
 
-export const cache = new NodeCache({ stdTTL: 300, checkperiod: 60 });
+const CACHE_TTL_SECONDS = 300; // 5 minutes
 
 export interface RateRecordResponse {
   date: string;
@@ -15,6 +15,14 @@ export async function getRatesForCurrencies(
   startDate: string,
   endDate: string,
 ): Promise<Record<string, RateRecordResponse[]>> {
+  const cacheKey = `rates:${startDate}:${endDate}:${currencyCodes.sort().join(',')}`;
+
+  const cachedData =
+    await redisCacheService.get<Record<string, RateRecordResponse[]>>(cacheKey);
+  if (cachedData) {
+    return cachedData;
+  }
+
   const queryResult = await db.query.exchangeRates.findMany({
     where: and(
       inArray(exchangeRates.currencyCode, currencyCodes),
@@ -34,24 +42,48 @@ export async function getRatesForCurrencies(
       rate: record.rate.toString(),
     });
   }
+
+  await redisCacheService.set(cacheKey, results, CACHE_TTL_SECONDS);
   return results;
 }
 
 export async function getLatestRate(
   currencyCode: string,
 ): Promise<RateRecordResponse | null> {
+  const cacheKey = `latest:${currencyCode}`;
+
+  const cachedData = await redisCacheService.get<RateRecordResponse>(cacheKey);
+  if (cachedData) {
+    return cachedData;
+  }
+
   const result = await db.query.exchangeRates.findFirst({
     where: eq(exchangeRates.currencyCode, currencyCode),
     orderBy: [desc(exchangeRates.date)],
   });
 
-  return result ? { date: result.date, rate: result.rate.toString() } : null;
+  if (result) {
+    const rateResponse = { date: result.date, rate: result.rate.toString() };
+    await redisCacheService.set(cacheKey, rateResponse, CACHE_TTL_SECONDS);
+    return rateResponse;
+  }
+
+  return null;
 }
 
 export async function getAllLatestRates(): Promise<
   Record<string, RateRecordResponse | null>
 > {
-  // This advanced query groups by currency and finds the latest date for each one.
+  const cacheKey = 'latest:all';
+
+  const cachedData =
+    await redisCacheService.get<Record<string, RateRecordResponse | null>>(
+      cacheKey,
+    );
+  if (cachedData) {
+    return cachedData;
+  }
+
   const sq = db
     .select({
       currencyCode: exchangeRates.currencyCode,
@@ -76,11 +108,14 @@ export async function getAllLatestRates(): Promise<
       ),
     );
 
-  return queryResult.reduce(
+  const results = queryResult.reduce(
     (acc, row) => {
       acc[row.code] = { date: row.date, rate: row.rate.toString() };
       return acc;
     },
     {} as Record<string, RateRecordResponse>,
   );
+
+  await redisCacheService.set(cacheKey, results, CACHE_TTL_SECONDS);
+  return results;
 }

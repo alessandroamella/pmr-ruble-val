@@ -2,28 +2,17 @@ import type { Request, Response } from 'express';
 import { Router } from 'express';
 import { logger } from 'server/utils/logger.ts';
 import {
-  cache,
   getAllLatestRates,
   getLatestRate,
   getRatesForCurrencies,
-  type RateRecordResponse,
 } from './rates-service.ts';
 
 const router = Router();
 
 // Endpoint for latest rates for all currencies
 router.get('/latest', async (_req: Request, res: Response) => {
-  const cacheKey = 'latest:all';
-
-  const cachedData =
-    cache.get<Record<string, RateRecordResponse | null>>(cacheKey);
-  if (cachedData) {
-    return res.status(200).json(cachedData);
-  }
-
   try {
-    const allLatestRates = await getAllLatestRates();
-    cache.set(cacheKey, allLatestRates);
+    const allLatestRates = await getAllLatestRates(); // Caching is now handled inside this function
     return res.status(200).json(allLatestRates);
   } catch (error) {
     logger.error('Error fetching all latest rates:', error);
@@ -36,19 +25,11 @@ router.get('/latest', async (_req: Request, res: Response) => {
 // Endpoint for latest rate for a specific currency
 router.get('/:currency/latest', async (req: Request, res: Response) => {
   const currencyCode = req.params.currency.toLowerCase();
-  const cacheKey = `latest:${currencyCode}`;
-
-  const cachedData = cache.get<RateRecordResponse>(cacheKey);
-  if (cachedData) {
-    return res.status(200).json(cachedData);
-  }
 
   try {
-    // The service no longer needs a file path!
-    const latestRecord = await getLatestRate(currencyCode);
+    const latestRecord = await getLatestRate(currencyCode); // Caching is handled inside
 
     if (latestRecord) {
-      cache.set(cacheKey, latestRecord);
       return res.status(200).json(latestRecord);
     }
     return res.status(404).json({
@@ -87,16 +68,8 @@ router.get('/historical', async (req: Request, res: Response) => {
       .json({ error: 'The currencies parameter cannot be empty.' });
   }
 
-  const cacheKey = `rates:${startDate}:${endDate}:${currencyCodes.sort().join(',')}`;
-
-  const cachedData = cache.get<Record<string, RateRecordResponse[]>>(cacheKey);
-  if (cachedData) {
-    return res.status(200).json(cachedData);
-  }
-
   try {
-    const data = await getRatesForCurrencies(currencyCodes, startDate, endDate);
-    cache.set(cacheKey, data);
+    const data = await getRatesForCurrencies(currencyCodes, startDate, endDate); // Caching is handled inside
     return res.status(200).json(data);
   } catch (error) {
     logger.error('Error fetching currency data:', error);

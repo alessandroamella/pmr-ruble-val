@@ -1,17 +1,12 @@
 import { isValid, parseISO } from 'date-fns';
-import NodeCache from 'node-cache';
 import cron from 'node-cron';
+import { redisCacheService } from 'server/services/cache.service';
 import { logger } from 'server/utils/logger';
 import type { ProviderResult } from './exchange.types';
 import { providers } from './providers';
 
 const CACHE_TTL_SECONDS = 6 * 60 * 60; // 6 hours in seconds
 const CRON_SCHEDULE = '0 */3 * * *'; // Every 3 hours at minute 0
-
-export const cache = new NodeCache({
-  stdTTL: CACHE_TTL_SECONDS,
-  checkperiod: 60,
-});
 
 // Track in-flight requests to prevent concurrent fetches for the same provider
 const inFlightRequests = new Map<string, Promise<ProviderResult>>();
@@ -36,7 +31,7 @@ export const fetchAllProviderRates = async (
   const allProviderPromises = Array.from(providers.values()).map(
     async (provider) => {
       const cacheKey = provider.name;
-      const cached = cache.get<ProviderResult>(cacheKey);
+      const cached = await redisCacheService.get<ProviderResult>(cacheKey);
 
       if (cached) {
         return cached;
@@ -54,7 +49,7 @@ export const fetchAllProviderRates = async (
       const requestPromise = provider
         .getRates(date)
         .then((result) => {
-          cache.set(cacheKey, result);
+          redisCacheService.set(cacheKey, result, CACHE_TTL_SECONDS);
           inFlightRequests.delete(inFlightKey);
           return result;
         })
@@ -109,7 +104,7 @@ export const fetchProviderRates = async (
   const cacheKey = provider.name;
 
   // Check if we have cached data
-  const cached = cache.get<ProviderResult>(cacheKey);
+  const cached = await redisCacheService.get<ProviderResult>(cacheKey);
   if (cached) {
     return cached;
   }
@@ -127,7 +122,7 @@ export const fetchProviderRates = async (
     .getRates(date)
     .then((result) => {
       logger.info(`Fetched rates from ${provider.name}`);
-      cache.set(cacheKey, result);
+      redisCacheService.set(cacheKey, result, CACHE_TTL_SECONDS);
       inFlightRequests.delete(inFlightKey);
       return result;
     })
