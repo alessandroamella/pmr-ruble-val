@@ -13,6 +13,9 @@ export const cache = new NodeCache({
   checkperiod: 60,
 });
 
+// Track in-flight requests to prevent concurrent fetches for the same provider
+const inFlightRequests = new Map<string, Promise<ProviderResult>>();
+
 /**
  * Validates if a string is in the 'YYYY-MM-DD' format.
  * @param dateStr The date string to validate.
@@ -39,9 +42,29 @@ export const fetchAllProviderRates = async (
         return cached;
       }
 
-      const result = await provider.getRates(date);
-      cache.set(cacheKey, result);
-      return result;
+      // Check if there's already an in-flight request for this provider
+      const inFlightKey = `${cacheKey}-${date || 'current'}`;
+      const existingRequest = inFlightRequests.get(inFlightKey);
+      if (existingRequest) {
+        logger.info(`Reusing in-flight request for ${provider.name}`);
+        return existingRequest;
+      }
+
+      // Create new request and track it
+      const requestPromise = provider
+        .getRates(date)
+        .then((result) => {
+          cache.set(cacheKey, result);
+          inFlightRequests.delete(inFlightKey);
+          return result;
+        })
+        .catch((error) => {
+          inFlightRequests.delete(inFlightKey);
+          throw error;
+        });
+
+      inFlightRequests.set(inFlightKey, requestPromise);
+      return requestPromise;
     },
   );
 
@@ -91,13 +114,30 @@ export const fetchProviderRates = async (
     return cached;
   }
 
-  const rates = await provider.getRates(date);
-  logger.info(`Fetched rates from ${provider.name}`);
+  // Check if there's already an in-flight request for this provider
+  const inFlightKey = `${cacheKey}-${date || 'current'}`;
+  const existingRequest = inFlightRequests.get(inFlightKey);
+  if (existingRequest) {
+    logger.info(`Reusing in-flight request for ${provider.name}`);
+    return existingRequest;
+  }
 
-  // Store the result in cache
-  cache.set(cacheKey, rates);
+  // Create new request and track it
+  const requestPromise = provider
+    .getRates(date)
+    .then((result) => {
+      logger.info(`Fetched rates from ${provider.name}`);
+      cache.set(cacheKey, result);
+      inFlightRequests.delete(inFlightKey);
+      return result;
+    })
+    .catch((error) => {
+      inFlightRequests.delete(inFlightKey);
+      throw error;
+    });
 
-  return rates;
+  inFlightRequests.set(inFlightKey, requestPromise);
+  return requestPromise;
 };
 
 /**
