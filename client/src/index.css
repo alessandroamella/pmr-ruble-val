@@ -84,20 +84,20 @@
   --shadow-2xs: 0px 1px 2px 0px hsl(222 47% 11% / 0.05);
   --shadow-xs: 0px 1px 3px 0px hsl(222 47% 11% / 0.08);
   --shadow-sm:
-    0px 2px 4px -1px hsl(222 47% 11% / 0.06), 0px 1px 2px -1px
-    hsl(222 47% 11% / 0.1);
+    0px 2px 4px -1px hsl(222 47% 11% / 0.06),
+    0px 1px 2px -1px hsl(222 47% 11% / 0.1);
   --shadow:
-    0px 4px 6px -1px hsl(222 47% 11% / 0.07), 0px 2px 4px -1px
-    hsl(222 47% 11% / 0.06);
+    0px 4px 6px -1px hsl(222 47% 11% / 0.07),
+    0px 2px 4px -1px hsl(222 47% 11% / 0.06);
   --shadow-md:
-    0px 6px 12px -2px hsl(222 47% 11% / 0.08), 0px 3px 7px -3px
-    hsl(222 47% 11% / 0.07);
+    0px 6px 12px -2px hsl(222 47% 11% / 0.08),
+    0px 3px 7px -3px hsl(222 47% 11% / 0.07);
   --shadow-lg:
-    0px 10px 20px -5px hsl(222 47% 11% / 0.1), 0px 6px 10px -5px
-    hsl(222 47% 11% / 0.08);
+    0px 10px 20px -5px hsl(222 47% 11% / 0.1),
+    0px 6px 10px -5px hsl(222 47% 11% / 0.08);
   --shadow-xl:
-    0px 20px 30px -10px hsl(222 47% 11% / 0.12), 0px 10px 15px -10px
-    hsl(222 47% 11% / 0.1);
+    0px 20px 30px -10px hsl(222 47% 11% / 0.12),
+    0px 10px 15px -10px hsl(222 47% 11% / 0.1);
   --shadow-2xl: 0px 30px 50px -15px hsl(222 47% 11% / 0.15);
   --tracking-normal: 0em;
   --spacing: 0.25rem;
@@ -241,8 +241,8 @@
   --shadow-lg:
     0px 10px 20px -5px hsl(0 0% 0% / 0.35), 0px 6px 10px -5px hsl(0 0% 0% / 0.3);
   --shadow-xl:
-    0px 20px 30px -10px hsl(0 0% 0% / 0.4), 0px 10px 15px -10px
-    hsl(0 0% 0% / 0.35);
+    0px 20px 30px -10px hsl(0 0% 0% / 0.4),
+    0px 10px 15px -10px hsl(0 0% 0% / 0.35);
   --shadow-2xl: 0px 30px 50px -15px hsl(0 0% 0% / 0.45);
 
   /* Fallback for older browsers */
@@ -373,11 +373,6 @@
     background-color: var(--elevate-2);
   }
 
-  /* If there's a 1px border, adjust the inset so that it covers that parent's border */
-  .border.toggle-elevate::before {
-    inset: -1px;
-  }
-
   /* Does not work on elements with overflow:hidden! */
   .hover-elevate:not(.no-default-hover-elevate),
   .active-elevate:not(.no-default-active-elevate),
@@ -410,13 +405,19 @@
   .active-elevate-2:active:not(.no-default-active-elevate)::after {
     background-color: var(--elevate-2);
   }
+}
 
-  /* If there's a 1px border, adjust the inset so that it covers that parent's border */
-  .border.hover-elevate:not(.no-hover-interaction-elevate)::after,
-  .border.active-elevate:not(.no-active-interaction-elevate)::after,
-  .border.hover-elevate-2:not(.no-hover-interaction-elevate)::after,
-  .border.active-elevate-2:not(.no-active-interaction-elevate)::after,
-  .border.hover-elevate:not(.no-hover-interaction-elevate)::after {
-    inset: -1px;
-  }
+/*
+ * Kept outside `@layer utilities` on purpose: inside it, Tailwind treats these
+ * compound selectors as part of the `border` utility and applies variants to
+ * them (e.g. `after:border` -> `::after::before`), which is invalid CSS and
+ * breaks the Vite 8 (lightningcss) minifier.
+ */
+/* If there's a 1px border, adjust the inset so that it covers that parent's border */
+.border.toggle-elevate::before,
+.border.hover-elevate:not(.no-hover-interaction-elevate)::after,
+.border.active-elevate:not(.no-active-interaction-elevate)::after,
+.border.hover-elevate-2:not(.no-hover-interaction-elevate)::after,
+.border.active-elevate-2:not(.no-active-interaction-elevate)::after {
+  inset: -1px;
 }

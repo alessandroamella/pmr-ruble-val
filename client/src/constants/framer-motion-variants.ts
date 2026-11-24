@@ -1,5 +1,7 @@
+import type { Variants } from 'framer-motion';
+
 // For staggering the main content blocks on page load
-export const containerVariants = {
+export const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -10,7 +12,7 @@ export const containerVariants = {
 };
 
 // For each individual content block
-export const itemVariants = {
+export const itemVariants: Variants = {
   hidden: { y: 20, opacity: 0 },
   visible: {
     y: 0,

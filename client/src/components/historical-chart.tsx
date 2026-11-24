@@ -335,11 +335,11 @@ export function HistoricalChart() {
                   color: 'hsl(var(--popover-foreground))',
                 }}
                 labelFormatter={(value) =>
-                  format(new Date(value), 'MMMM d, yyyy')
+                  format(new Date(String(value)), 'MMMM d, yyyy')
                 }
-                formatter={(value: string, name: string) => [
-                  Number.parseFloat(value).toFixed(4),
-                  name.toUpperCase(),
+                formatter={(value, name) => [
+                  Number.parseFloat(String(value)).toFixed(4),
+                  String(name).toUpperCase(),
                 ]}
               />
               <Legend />

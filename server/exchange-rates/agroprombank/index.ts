@@ -67,7 +67,7 @@ export class AgroPromBankProvider implements IExchangeRateProvider {
       });
 
       const cashRatesSection = response.data.CR;
-      if (!cashRatesSection || !cashRatesSection.rates) {
+      if (!cashRatesSection?.rates) {
         throw new Error(
           "API response did not contain 'CR' (Cash Rates) section.",
         );

@@ -46,7 +46,7 @@ export class EximBankProvider implements IExchangeRateProvider {
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
       });
 
-      page.setViewport({ width: 1280, height: 800 }); // standard desktop size
+      await page.setViewport({ width: 1280, height: 800 }); // standard desktop size
 
       logger.info(`[${this.name}] Navigating to ${this.url}...`);
 
@@ -75,6 +75,12 @@ export class EximBankProvider implements IExchangeRateProvider {
           `[${this.name}] Currency table found despite navigation error, continuing...`,
         );
       }
+
+      // The FOXCLOUD anti-bot page can settle the network before it redirects
+      // to the real site, so explicitly wait for the currency table to appear.
+      await page.waitForSelector('.currencies_box .currencies_table tbody tr', {
+        timeout: 30_000,
+      });
 
       if (envs.TAKE_SCREENSHOTS) {
         await page.screenshot({

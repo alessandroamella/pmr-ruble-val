@@ -11,7 +11,10 @@ export const latestRateSchema = z.object({
   rate: z.string(),
 });
 
-export const ratesResponseSchema = z.record(z.array(currencyRateSchema));
+export const ratesResponseSchema = z.record(
+  z.string(),
+  z.array(currencyRateSchema),
+);
 
 // TypeScript types
 export type CurrencyRate = z.infer<typeof currencyRateSchema>;

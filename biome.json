@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.2.6/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.6.8/schema.json",
   "vcs": {
     "enabled": true,
     "clientKind": "git",
@@ -8,17 +8,29 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "includes": ["client/**/*", "server/**/*", "shared/**/*", "*.config.*"]
+    "includes": [
+      "client/**/*",
+      "server/**/*",
+      "shared/**/*",
+      "*.config.*",
+      "!**/*.svg"
+    ]
   },
   "formatter": {
     "enabled": true,
     "indentStyle": "space"
   },
-  "assist": { "actions": { "source": { "organizeImports": "on" } } },
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true,
+      "preset": "recommended",
       "a11y": {
         "useFocusableInteractive": "off",
         "useSemanticElements": "off",
@@ -69,6 +81,11 @@
     },
     "parser": {
       "unsafeParameterDecoratorsEnabled": true
+    }
+  },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
     }
   }
 }

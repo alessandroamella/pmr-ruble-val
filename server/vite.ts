@@ -46,7 +46,7 @@ export async function setupVite(app: Express, server: Server) {
   app.use(vite.middlewares);
 
   // Catch-all per servire l'index.html processato da Vite.
-  app.use('*', async (req: Request, res: Response, next) => {
+  app.use('/{*splat}', async (req: Request, res: Response, next) => {
     try {
       const url = req.originalUrl;
       const template = await vite.transformIndexHtml(
@@ -93,7 +93,7 @@ export function serveStatic(app: Express) {
   // 2. SPA Fallback: Per QUALSIASI altra richiesta GET che non è stata gestita
   //    prima (né dalle API, né da express.static), servi l'index.html.
   //    Questo permette al router client-side di prendere il controllo.
-  app.get('*', (_req, res) => {
+  app.get('/{*splat}', (_req, res) => {
     res.sendFile(path.resolve(clientBuildPath, 'index.html'));
   });
 }

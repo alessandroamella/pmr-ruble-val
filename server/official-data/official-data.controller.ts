@@ -23,25 +23,28 @@ router.get('/latest', async (_req: Request, res: Response) => {
 });
 
 // Endpoint for latest rate for a specific currency
-router.get('/:currency/latest', async (req: Request, res: Response) => {
-  const currencyCode = req.params.currency.toLowerCase();
+router.get(
+  '/:currency/latest',
+  async (req: Request<{ currency: string }>, res: Response) => {
+    const currencyCode = req.params.currency.toLowerCase();
 
-  try {
-    const latestRecord = await getLatestRate(currencyCode); // Caching is handled inside
+    try {
+      const latestRecord = await getLatestRate(currencyCode); // Caching is handled inside
 
-    if (latestRecord) {
-      return res.status(200).json(latestRecord);
+      if (latestRecord) {
+        return res.status(200).json(latestRecord);
+      }
+      return res.status(404).json({
+        error: `No rate records found for currency '${currencyCode}'.`,
+      });
+    } catch (error) {
+      logger.error(`Error fetching latest rate for ${currencyCode}:`, error);
+      return res
+        .status(500)
+        .json({ error: 'An internal server error occurred.' });
     }
-    return res.status(404).json({
-      error: `No rate records found for currency '${currencyCode}'.`,
-    });
-  } catch (error) {
-    logger.error(`Error fetching latest rate for ${currencyCode}:`, error);
-    return res
-      .status(500)
-      .json({ error: 'An internal server error occurred.' });
-  }
-});
+  },
+);
 
 // Endpoint for historical rates
 router.get('/historical', async (req: Request, res: Response) => {
