@@ -13,7 +13,7 @@ Data is scraped from the [Pridnestrovian Republican Bank](https://www.cbpmr.net/
    pnpm install
    ```
 
-   Note: if you have a Chromium-based browser installed and don't want Puppeteer to download its own version, set the `PUPPETEER_SKIP_DOWNLOAD` environment variable to `true` before running the install command.
+   Note: if you have a Chromium-based browser installed and don't want Puppeteer to download its own version, set `CHROMIUM_PATH` in your `.env` (e.g. `CHROMIUM_PATH=/usr/bin/google-chrome-stable`) before running the install command: `.puppeteerrc.cjs` then skips the download and the scraper uses that browser. Pick a browser version close to the one Puppeteer targets.
 
 3. Create a `.env` file in the root directory and set the environment variables needed, as specified in the schema under `.server/config/envs.ts`.
 4. Initialize the database schema:
