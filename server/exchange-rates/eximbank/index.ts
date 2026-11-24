@@ -1,5 +1,5 @@
 import { join } from 'node:path';
-import puppeteer, { type Browser, type Page } from 'puppeteer';
+import puppeteer, { type Browser, type Page } from 'rebrowser-puppeteer';
 import { envs } from 'server/config/envs';
 import { tmpDir } from 'server/config/prepare-dirs';
 import { logger } from 'server/utils/logger';

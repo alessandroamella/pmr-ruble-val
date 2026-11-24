@@ -61,7 +61,7 @@ Right now it fetches data from the [official bank](<(https://www.cbpmr.net/?lang
 - EximBank
 - PrisBank
 
-Each bank has its own scraper module that adheres to the `IExchangeRateProvider` interface. Some of them do an Axios call and parse the HTML with Cheerio, others run a full headless Chrome via Puppeteer (EximBank has a 'FOXCLOUD protection' page that returns a 503 and redirects via JavaScript after a few seconds; a real browser that waits for the rates table gets through, no stealth plugins needed).
+Each bank has its own scraper module that adheres to the `IExchangeRateProvider` interface. Some of them do an Axios call and parse the HTML with Cheerio, others run a full headless Chrome via [rebrowser-puppeteer](https://github.com/rebrowser/rebrowser-patches), a drop-in Puppeteer fork that patches common automation leaks (EximBank has a 'FOXCLOUD protection' page that returns a 503 and redirects via JavaScript after a few seconds; a real browser that waits for the rates table gets through, no stealth plugins needed).
 
 Data from commercial banks is cached with a simple in-memory cache (with `node-cache`) for 6 hours, as it's unlikely that exchange rates will change more often than that.
 

@@ -2,10 +2,10 @@
 allowBuilds:
   bufferutil: true
   esbuild: true
-  puppeteer: true
+  rebrowser-puppeteer: true
 
 # pnpm <= 10 (e.g. the production server)
 onlyBuiltDependencies:
   - bufferutil
   - esbuild
-  - puppeteer
+  - rebrowser-puppeteer

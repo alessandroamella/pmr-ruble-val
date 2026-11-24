@@ -16,7 +16,7 @@ function chromiumPathFromDotenv() {
 
 const chromiumPath = process.env.CHROMIUM_PATH || chromiumPathFromDotenv();
 
-/** @type {import("puppeteer").Configuration} */
+/** @type {import("rebrowser-puppeteer").Configuration} */
 module.exports = {
   skipDownload: Boolean(chromiumPath),
 };
