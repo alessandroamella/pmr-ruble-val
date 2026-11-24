@@ -1,7 +1,5 @@
 import { join } from 'node:path';
-import type { Browser, Page } from 'puppeteer';
-import puppeteer from 'puppeteer-extra';
-import StealthPlugin from 'puppeteer-extra-plugin-stealth';
+import puppeteer, { type Browser, type Page } from 'puppeteer';
 import { envs } from 'server/config/envs';
 import { tmpDir } from 'server/config/prepare-dirs';
 import { logger } from 'server/utils/logger';
@@ -10,8 +8,6 @@ import type {
   NormalizedRates,
   ProviderResult,
 } from '../exchange.types';
-
-puppeteer.use(StealthPlugin());
 
 export class EximBankProvider implements IExchangeRateProvider {
   readonly name = 'EximBank';
@@ -41,9 +37,13 @@ export class EximBankProvider implements IExchangeRateProvider {
       const page = await browser.newPage();
       _page = page;
 
+      // Use the real browser's UA, minus the "HeadlessChrome" marker, so it
+      // stays current with whatever Chrome version is installed.
       await page.setUserAgent({
-        userAgent:
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
+        userAgent: (await browser.userAgent()).replace(
+          'HeadlessChrome',
+          'Chrome',
+        ),
       });
 
       await page.setViewport({ width: 1280, height: 800 }); // standard desktop size
